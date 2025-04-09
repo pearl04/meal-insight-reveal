@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@/utils/test-utils';
 import ImageUploader from '../ImageUploader';
@@ -149,18 +150,3 @@ describe('ImageUploader', () => {
     global.FileReader = originalFileReader;
   });
 });
-
-// Add this helper function to find file inputs
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toHaveAttribute(attr: string, value?: any): R;
-    }
-  }
-}
-
-function getByAcceptingDroppableFiles() {
-  return document.querySelector('input[type="file"]')!;
-}
-
-screen.getByAcceptingDroppableFiles = getByAcceptingDroppableFiles;

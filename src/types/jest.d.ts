@@ -4,12 +4,15 @@
 import '@testing-library/jest-dom';
 
 declare global {
-  // Extend Jest matchers
   namespace jest {
     interface Matchers<R> {
       toHaveAttribute(attr: string, value?: any): R;
       toBeInTheDocument(): R;
       toHaveClass(className: string): R;
+      toBeVisible(): R;
+      toHaveTextContent(text: string): R;
+      toContainElement(element: HTMLElement | null): R;
+      toHaveValue(value: any): R;
       // Add other matchers as needed
     }
 
