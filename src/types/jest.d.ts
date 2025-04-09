@@ -19,7 +19,7 @@ declare global {
 // Extend Jest matchers with Testing Library matchers
 declare global {
   namespace jest {
-    interface Matchers<R, T> {
+    interface Matchers<R> {
       toBeInTheDocument(): R;
       toHaveClass(className: string): R;
     }

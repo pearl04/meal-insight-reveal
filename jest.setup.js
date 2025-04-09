@@ -33,13 +33,10 @@ Object.defineProperty(window, 'IntersectionObserver', {
   value: MockIntersectionObserver,
 });
 
-// This part comes last to ensure everything else is loaded first
+// Register custom queries - this needs to be done last
 import { screen } from '@testing-library/react';
 import { getByAcceptingDroppableFiles } from './src/utils/test-utils';
 
-// Extend screen with custom queries - using a try/catch to handle potential errors
-try {
-  screen.getByAcceptingDroppableFiles = getByAcceptingDroppableFiles;
-} catch (e) {
-  console.warn('Could not extend screen with custom queries:', e);
-}
+// Add the custom query to screen
+// @ts-ignore - We'll ignore the TypeScript error here since we know what we're doing
+screen.getByAcceptingDroppableFiles = getByAcceptingDroppableFiles;

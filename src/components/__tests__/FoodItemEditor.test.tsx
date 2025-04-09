@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@/utils/test-utils';
 import FoodItemEditor from '../FoodItemEditor';
 import { jest, expect, describe, test, beforeEach } from '@jest/globals';
+import '@testing-library/jest-dom';
 
 describe('FoodItemEditor', () => {
   const mockDetectedItems = [
@@ -146,7 +146,7 @@ describe('FoodItemEditor', () => {
     // We can't check the exact content of the mock call because the IDs will be different,
     // but we can check that it has 2 items
     expect(mockOnConfirm).toHaveBeenCalled();
-    const calledWith = mockOnConfirm.mock.calls[0][0];
+    const calledWith = mockOnConfirm.mock.calls[0][0] as Array<{id: string, name: string}>;
     expect(calledWith.length).toBe(2);
     expect(calledWith.some(item => item.name === 'Chicken')).toBe(true);
     expect(calledWith.some(item => item.name === 'Banana')).toBe(true);
