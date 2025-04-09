@@ -3,6 +3,7 @@ import React from 'react';
 import { render } from '@/utils/test-utils';
 import LoadingSpinner from '../LoadingSpinner';
 import { jest, expect, describe, test } from '@jest/globals';
+import '@testing-library/jest-dom'; // Add explicit import
 
 describe('LoadingSpinner', () => {
   test('renders with default size', () => {

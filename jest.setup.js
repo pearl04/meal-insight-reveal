@@ -33,9 +33,13 @@ Object.defineProperty(window, 'IntersectionObserver', {
   value: MockIntersectionObserver,
 });
 
-// Add screen extensions
+// This part comes last to ensure everything else is loaded first
 import { screen } from '@testing-library/react';
 import { getByAcceptingDroppableFiles } from './src/utils/test-utils';
 
-// Extend screen with custom queries
-screen.getByAcceptingDroppableFiles = getByAcceptingDroppableFiles;
+// Extend screen with custom queries - using a try/catch to handle potential errors
+try {
+  screen.getByAcceptingDroppableFiles = getByAcceptingDroppableFiles;
+} catch (e) {
+  console.warn('Could not extend screen with custom queries:', e);
+}

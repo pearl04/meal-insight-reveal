@@ -1,6 +1,6 @@
 
 import React, { ReactElement } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import { render, RenderOptions, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { ToastProvider } from '@/components/ui/toast';
 
@@ -34,6 +34,18 @@ export const createMockFile = (
 export const getByAcceptingDroppableFiles = (): HTMLInputElement => {
   return document.querySelector('input[type="file"]')!;
 };
+
+// Extend screen with our custom query
+if (typeof screen !== 'undefined') {
+  screen.getByAcceptingDroppableFiles = getByAcceptingDroppableFiles;
+}
+
+// Extend Screen type
+declare module '@testing-library/react' {
+  interface Screen {
+    getByAcceptingDroppableFiles: () => HTMLInputElement;
+  }
+}
 
 export * from '@testing-library/react';
 export { customRender as render };

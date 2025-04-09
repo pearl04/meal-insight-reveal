@@ -5,7 +5,8 @@
     "types": ["jest", "node", "@testing-library/jest-dom"],
     "esModuleInterop": true,
     "jsx": "react-jsx",
-    "module": "commonjs"
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*.ts",

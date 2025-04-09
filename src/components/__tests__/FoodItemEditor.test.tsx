@@ -2,6 +2,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@/utils/test-utils';
 import FoodItemEditor from '../FoodItemEditor';
+import { jest, expect, describe, test, beforeEach } from '@jest/globals';
 
 describe('FoodItemEditor', () => {
   const mockDetectedItems = [

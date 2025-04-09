@@ -1,8 +1,8 @@
 
 // This file provides TypeScript type definitions for Jest testing
 
-import "@testing-library/jest-dom";
-import { expect } from "@jest/globals";
+import '@testing-library/jest-dom';
+import { expect } from '@jest/globals';
 
 declare global {
   // Extend Jest matchers
@@ -13,5 +13,15 @@ declare global {
 
     // Add MockedFunction type
     type MockedFunction<T extends (...args: any) => any> = jest.Mock<ReturnType<T>, Parameters<T>>;
+  }
+}
+
+// Extend Jest matchers with Testing Library matchers
+declare global {
+  namespace jest {
+    interface Matchers<R, T> {
+      toBeInTheDocument(): R;
+      toHaveClass(className: string): R;
+    }
   }
 }
