@@ -19,4 +19,9 @@ module.exports = {
     'setupTests.js',
     'jest.setup.js',
   ],
+  globals: {
+    'ts-jest': {
+      isolatedModules: true,
+    },
+  },
 };

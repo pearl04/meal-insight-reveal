@@ -1,7 +1,7 @@
 
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 import { ToastProvider } from '@/components/ui/toast';
 
 // Create a custom render function that includes providers
@@ -28,6 +28,11 @@ export const createMockFile = (
   const file = new File(['mock file content'], name, { type });
   Object.defineProperty(file, 'size', { value: size });
   return file;
+};
+
+// Helper function for finding file inputs in tests
+export const getByAcceptingDroppableFiles = (): HTMLInputElement => {
+  return document.querySelector('input[type="file"]')!;
 };
 
 export * from '@testing-library/react';

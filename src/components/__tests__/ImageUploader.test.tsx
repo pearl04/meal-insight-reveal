@@ -3,6 +3,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@/utils/test-utils';
 import ImageUploader from '../ImageUploader';
 import { createMockFile } from '@/utils/test-utils';
+import { jest, expect, describe, test, beforeEach } from '@jest/globals';
 
 describe('ImageUploader', () => {
   // Mock function for onImageSelect

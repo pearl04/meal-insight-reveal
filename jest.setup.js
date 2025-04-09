@@ -1,6 +1,7 @@
 
-// Add any global setup for Jest tests here
+// Add Jest DOM matchers
 import '@testing-library/jest-dom';
+import { jest } from '@jest/globals';
 
 // Mock the matchMedia function which is not available in the Jest environment
 Object.defineProperty(window, 'matchMedia', {
@@ -31,3 +32,10 @@ Object.defineProperty(window, 'IntersectionObserver', {
   writable: true,
   value: MockIntersectionObserver,
 });
+
+// Add screen extensions
+import { screen } from '@testing-library/react';
+import { getByAcceptingDroppableFiles } from './src/utils/test-utils';
+
+// Extend screen with custom queries
+screen.getByAcceptingDroppableFiles = getByAcceptingDroppableFiles;
