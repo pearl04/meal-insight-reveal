@@ -36,8 +36,6 @@ export const getByAcceptingDroppableFiles = (): HTMLInputElement => {
   return document.querySelector('input[type="file"]')!;
 };
 
-// Export custom queries so they can be used in jest.setup.js
-export { getByAcceptingDroppableFiles };
-
+// Export everything from testing library
 export * from '@testing-library/react';
 export { customRender as render };

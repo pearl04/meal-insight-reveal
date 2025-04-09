@@ -38,5 +38,4 @@ import { screen } from '@testing-library/react';
 import { getByAcceptingDroppableFiles } from './src/utils/test-utils';
 
 // Add the custom query to screen
-// @ts-ignore - We'll ignore the TypeScript error here since we know what we're doing
 screen.getByAcceptingDroppableFiles = getByAcceptingDroppableFiles;
