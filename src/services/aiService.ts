@@ -2,10 +2,92 @@
 import { FoodItem } from "@/components/FoodItemEditor";
 import { FoodWithNutrition } from "@/components/NutritionDisplay";
 
-// This is a simple mock service that simulates AI analysis of images
-// In a real app, this would connect to a server or API
+// OpenRouter integration for better AI image analysis
+export const analyzeImage = async (imageFile: File, apiKey?: string): Promise<FoodItem[]> => {
+  // If no API key is provided, fall back to the mock service
+  if (!apiKey) {
+    return mockAnalyzeImage(imageFile);
+  }
+  
+  try {
+    // Convert the image to base64
+    const base64Image = await fileToBase64(imageFile);
+    
+    // Call OpenRouter API to analyze the image
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": window.location.origin,
+      },
+      body: JSON.stringify({
+        model: "anthropic/claude-3-opus:beta",
+        messages: [
+          {
+            role: "system",
+            content: "You are a nutritional expert that identifies food items in images. Respond with ONLY a JSON array of food items that you can identify in the image. Each food item should have an 'id' (a unique string) and 'name' property. Don't include any explanation, just the JSON array."
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Identify all the food items in this image:" },
+              { type: "image_url", image_url: { url: base64Image } }
+            ]
+          }
+        ]
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`OpenRouter API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Parse the AI response to extract food items
+    try {
+      const content = data.choices[0]?.message?.content || '';
+      // Extract JSON array from response if needed
+      const jsonMatch = content.match(/\[\s*\{.*\}\s*\]/s);
+      const jsonStr = jsonMatch ? jsonMatch[0] : content;
+      const foodItems = JSON.parse(jsonStr);
+      
+      // Ensure the response has the correct format
+      if (Array.isArray(foodItems) && foodItems.length > 0) {
+        return foodItems.map(item => ({
+          id: item.id || `food-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          name: item.name
+        }));
+      }
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", parseError);
+    }
+    
+    // Fallback to mock data if parsing fails
+    return mockAnalyzeImage(imageFile);
+  } catch (error) {
+    console.error("Error calling OpenRouter API:", error);
+    // Fallback to mock data if the API call fails
+    return mockAnalyzeImage(imageFile);
+  }
+};
 
-export const analyzeImage = async (imageFile: File): Promise<FoodItem[]> => {
+// Convert file to base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+// Original mock service as fallback
+const mockAnalyzeImage = async (imageFile: File): Promise<FoodItem[]> => {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 1500));
   
