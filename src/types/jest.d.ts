@@ -1,6 +1,4 @@
 
-// This file provides TypeScript type definitions for Jest testing
-
 import '@testing-library/jest-dom';
 
 declare global {
@@ -13,22 +11,13 @@ declare global {
       toHaveTextContent(text: string): R;
       toContainElement(element: HTMLElement | null): R;
       toHaveValue(value: any): R;
-      // Add other matchers as needed
     }
-
-    // Add MockedFunction type
-    type MockedFunction<T extends (...args: any) => any> = jest.Mock<ReturnType<T>, Parameters<T>>;
   }
-}
-
-// Extend expect interface
-declare module '@testing-library/jest-dom' {
-  // Add any additional custom matchers here if needed
 }
 
 // For screen augmentation
 declare module '@testing-library/react' {
-  interface Screen {
+  export interface Screen {
     getByAcceptingDroppableFiles: () => HTMLInputElement;
   }
 }

@@ -1,6 +1,6 @@
 
 import React, { ReactElement } from 'react';
-import { render, RenderOptions, screen } from '@testing-library/react';
+import { render, RenderOptions, screen, queries } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { ToastProvider } from '@/components/ui/toast';
 import '@testing-library/jest-dom';

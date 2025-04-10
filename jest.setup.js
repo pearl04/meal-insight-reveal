@@ -33,8 +33,8 @@ Object.defineProperty(window, 'IntersectionObserver', {
   value: MockIntersectionObserver,
 });
 
-// Register custom queries - this needs to be done last
-import { screen } from '@testing-library/react';
+// Register custom queries
+import { configure, screen } from '@testing-library/react';
 import { getByAcceptingDroppableFiles } from './src/utils/test-utils';
 
 // Add the custom query to screen
