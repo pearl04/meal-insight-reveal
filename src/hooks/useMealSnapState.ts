@@ -1,8 +1,10 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { FoodItem } from "@/types/nutrition";
 import { analyzeImage, getNutritionInfo } from "@/services/aiService";
 import { useToast } from "@/components/ui/use-toast";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export enum AppState {
   UPLOAD,
@@ -23,6 +25,29 @@ export const useMealSnapState = () => {
   const [isMockData, setIsMockData] = useState<boolean>(false);
   const { toast: uiToast } = useToast();
 
+  // Fetch OpenRouter API key from edge function on component mount
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-openrouter-key');
+        
+        if (error) {
+          console.error('Error fetching API key:', error);
+          return;
+        }
+        
+        if (data?.key) {
+          setOpenRouterKey(data.key);
+          console.log('Successfully fetched OpenRouter API key from edge function');
+        }
+      } catch (err) {
+        console.error('Failed to fetch API key:', err);
+      }
+    };
+    
+    fetchApiKey();
+  }, []);
+
   const handleImageSelect = async (file: File) => {
     setSelectedImage(file);
     setAppState(AppState.ANALYZING);
@@ -31,7 +56,15 @@ export const useMealSnapState = () => {
 
     try {
       console.log("Analyzing image with API key:", openRouterKey ? "Provided" : "Not provided");
-      const items = await analyzeImage(file);
+      
+      // Log all key sources for debugging
+      console.info("Key sources available:", {
+        manualKeyProvided: !!openRouterKey,
+        edgeFunctionKeyProvided: false, // Will be updated by the API service
+        envKeyProvided: !!import.meta.env.VITE_OPENROUTER_API_KEY
+      });
+      
+      const items = await analyzeImage(file, openRouterKey);
       setFoodItems(items);
 
       // Check if this is mock data

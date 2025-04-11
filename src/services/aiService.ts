@@ -1,4 +1,6 @@
+
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
+import { supabase } from "@/integrations/supabase/client";
 
 // === Helpers ===
 const fileToBase64 = (file: File): Promise<string> => {
@@ -30,23 +32,65 @@ const mockAnalyzeImage = async (): Promise<FoodItem[]> => {
   ];
 };
 
-export const analyzeImage = async (imageFile: File): Promise<FoodItem[]> => {
+export const analyzeImage = async (imageFile: File, manualApiKey?: string): Promise<FoodItem[]> => {
   try {
     const base64Image = await fileToBase64(imageFile);
+    
+    // Try to get API key from different sources
+    let apiKey = manualApiKey || '';
+    
+    // If no manual key, try to get from edge function
+    if (!apiKey) {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-openrouter-key');
+        if (data?.key && !error) {
+          apiKey = data.key;
+          console.log("Successfully retrieved API key from edge function");
+        } else if (error) {
+          console.error("Error fetching API key from edge function:", error);
+        }
+      } catch (err) {
+        console.error("Failed to fetch API key:", err);
+      }
+    }
+    
+    // If still no key, check environment variable
+    const envKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    if (!apiKey && envKey) {
+      apiKey = envKey;
+    }
+    
+    // Log the key sources for debugging
+    console.info("Key sources available:", {
+      manualKeyProvided: !!manualApiKey,
+      edgeFunctionKeyProvided: !!apiKey && !manualApiKey,
+      envKeyProvided: !!envKey
+    });
+    
+    // If no API key available, return mock data
+    if (!apiKey) {
+      console.warn("❗ No API key found from any source. Falling back to mock data.");
+      return mockAnalyzeImage();
+    }
 
+    // API key is available, proceed with actual analysis
     const response = await fetch("https://fpwuewixgazaiikqtuwq.functions.supabase.co/get-nutrition", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
       body: JSON.stringify({ image: base64Image }),
     });
 
-    const raw = await response.text();
-    console.log("📦 Supabase Edge Function response (status", response.status, "):", raw);
-
     if (!response.ok) {
-      console.error("❌ Supabase function error:", raw);
-      throw new Error("Supabase function failed");
+      const errorText = await response.text();
+      console.error(`❌ Supabase function error (${response.status}):`, errorText);
+      throw new Error(`Supabase function failed with status ${response.status}`);
     }
+
+    const raw = await response.text();
+    console.log("📦 Supabase Edge Function response:", raw);
 
     // Try parsing only the array inside
     const cleaned = raw.replace(/^[^{\[]+/, "").replace(/[\n\r\t\s]*$/, "");

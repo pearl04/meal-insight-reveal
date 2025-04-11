@@ -1,27 +1,56 @@
+
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-serve(async (req) => {
-  const { image } = await req.json();
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": 
+    "authorization, x-client-info, apikey, content-type",
+};
 
-  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
-  if (!apiKey) {
-    return new Response("Missing API key", { status: 500 });
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
 
-  const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-      "HTTP-Referer": "https://yourdomain.com", // update with your frontend domain
-    },
-    body: JSON.stringify({
-      model: "openrouter/optimus-alpha",
-      messages: [
-        {
-          role: "system",
-          content: `
+  try {
+    const { image } = await req.json();
+    
+    // First try to get API key from the Authorization header
+    let apiKey = req.headers.get("Authorization")?.replace("Bearer ", "") || "";
+    
+    // If no API key in header, try environment variable
+    if (!apiKey) {
+      apiKey = Deno.env.get("OPENROUTER_API_KEY") || "";
+    }
+    
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Missing API key", 
+          message: "No OpenRouter API key provided in Authorization header or environment" 
+        }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://mealsnap.app", 
+      },
+      body: JSON.stringify({
+        model: "openrouter/optimus-alpha",
+        messages: [
+          {
+            role: "system",
+            content: `
 You are a nutritionist AI that analyzes food images. Only return a pure JSON array like this:
 
 [
@@ -34,22 +63,49 @@ You are a nutritionist AI that analyzes food images. Only return a pure JSON arr
   }
 ]
 No explanation, markdown, or text. Only JSON array.`,
-        },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: "Analyze this meal and return JSON." },
-            { type: "image_url", image_url: { url: image } },
-          ],
-        },
-      ],
-    }),
-  });
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Analyze this meal and return JSON." },
+              { type: "image_url", image_url: { url: image } },
+            ],
+          },
+        ],
+      }),
+    });
 
-  const raw = await openRouterRes.text();
+    if (!openRouterRes.ok) {
+      const errorData = await openRouterRes.text();
+      console.error(`OpenRouter API error (${openRouterRes.status}): ${errorData}`);
+      return new Response(
+        JSON.stringify({ 
+          error: "OpenRouter API error", 
+          status: openRouterRes.status,
+          details: errorData
+        }),
+        { 
+          status: openRouterRes.status, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+    
+    const raw = await openRouterRes.text();
+    console.log("OpenRouter API response received successfully");
 
-  return new Response(raw, {
-    headers: { "Content-Type": "application/json" },
-    status: openRouterRes.status,
-  });
+    return new Response(raw, {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+    
+  } catch (error) {
+    console.error("Error in get-nutrition function:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
+    );
+  }
 });
