@@ -37,8 +37,26 @@ Object.defineProperty(window, 'IntersectionObserver', {
 import { configure } from '@testing-library/react';
 import { getByAcceptingDroppableFiles } from './src/utils/test-utils';
 
+// Create the query interfaces with all three query variants
+const queryByAcceptingDroppableFiles = (container) => {
+  const input = getByAcceptingDroppableFiles(container);
+  return input || null;
+};
+
+const findByAcceptingDroppableFiles = async (container) => {
+  const input = getByAcceptingDroppableFiles(container);
+  if (!input) {
+    throw new Error('Unable to find an element accepting droppable files');
+  }
+  return input;
+};
+
 // Extend the queries with custom ones
-const customQueries = { getByAcceptingDroppableFiles };
+const customQueries = { 
+  getByAcceptingDroppableFiles,
+  queryByAcceptingDroppableFiles,
+  findByAcceptingDroppableFiles
+};
 
 // Configure custom queries to be available
 configure({ queries: customQueries });

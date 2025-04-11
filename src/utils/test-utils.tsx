@@ -32,8 +32,8 @@ export const createMockFile = (
 };
 
 // Helper function for finding file inputs in tests
-export const getByAcceptingDroppableFiles = (): HTMLInputElement => {
-  return document.querySelector('input[type="file"]')!;
+export const getByAcceptingDroppableFiles = (container: HTMLElement): HTMLInputElement => {
+  return container.querySelector('input[type="file"]')!;
 };
 
 // Export everything from testing library
