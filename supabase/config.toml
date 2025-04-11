@@ -4,11 +4,9 @@ project_id = "fpwuewixgazaiikqtuwq"
 [functions.get-nutrition]
 enabled = true
 verify_jwt = false
-import_map = "./functions/get-nutrition/deno.json"
-entrypoint = "./functions/get-nutrition/index.ts"
+entrypoint = "index.ts"
 
 [functions.get-openrouter-key]
 enabled = true
 verify_jwt = false
-import_map = "./functions/get-openrouter-key/deno.json"
-entrypoint = "./functions/get-openrouter-key/index.ts"
+entrypoint = "index.ts"
