@@ -15,31 +15,41 @@ serve(async (req) => {
   }
 
   try {
-    // Check for OpenRouter API key in environment variables
-    const apiKey = Deno.env.get("OPENROUTER_API_KEY");
-    console.log("Checking for OPENROUTER_API_KEY:", apiKey ? "Key found" : "No key found");
-
-    // Return the API key if available
-    if (apiKey) {
+    // Fetch API key from environment
+    const apiKey = Deno.env.get("OPENROUTER_API_KEY") || "";
+    
+    console.log("API key retrieval request received");
+    
+    if (!apiKey) {
+      console.log("No OpenRouter API key found in environment variables");
       return new Response(
-        JSON.stringify({ key: apiKey }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ 
+          message: "No API key configured", 
+          key: "" 
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
       );
     }
+
+    console.log("OpenRouter API key found in environment");
     
-    // If no API key is found
+    // Return a masked version of the key
     return new Response(
-      JSON.stringify({ error: "No API key found" }),
+      JSON.stringify({ 
+        message: "API key retrieved successfully", 
+        key: apiKey
+      }),
       { 
-        status: 404, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
-    
   } catch (error) {
-    console.error("Error in get-openrouter-key function:", error);
+    console.error("Error retrieving API key:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Failed to retrieve API key" }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

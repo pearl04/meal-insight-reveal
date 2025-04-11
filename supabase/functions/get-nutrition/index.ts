@@ -15,28 +15,29 @@ serve(async (req) => {
   }
 
   try {
-    const { image } = await req.json();
+    const requestBody = await req.json();
+    const { image, apiKey } = requestBody;
     
-    // First try to get API key from the Authorization header
-    let apiKey = req.headers.get("Authorization")?.replace("Bearer ", "") || "";
+    // First try to use API key from the request body
+    let openRouterKey = apiKey || "";
     
-    // If no API key in header, try environment variable
-    if (!apiKey) {
-      console.log("No API key in Authorization header, checking environment variable");
-      apiKey = Deno.env.get("OPENROUTER_API_KEY") || "";
-      if (apiKey) {
+    // If no API key in request, try environment variable
+    if (!openRouterKey) {
+      console.log("No API key in request body, checking environment variable");
+      openRouterKey = Deno.env.get("OPENROUTER_API_KEY") || "";
+      if (openRouterKey) {
         console.log("Found API key in environment variable");
       }
     } else {
-      console.log("Using API key from Authorization header");
+      console.log("Using API key from request body");
     }
     
-    if (!apiKey) {
+    if (!openRouterKey) {
       console.error("No OpenRouter API key found from any source");
       return new Response(
         JSON.stringify({ 
           error: "Missing API key", 
-          message: "No OpenRouter API key provided in Authorization header or environment" 
+          message: "No OpenRouter API key provided in request or environment" 
         }),
         { 
           status: 401, 
@@ -50,7 +51,7 @@ serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${openRouterKey}`,
         "HTTP-Referer": "https://mealsnap.app", 
       },
       body: JSON.stringify({

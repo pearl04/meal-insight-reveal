@@ -1,3 +1,4 @@
+
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { supabase } from "@/integrations/supabase/client"; // ✅ adjust if path differs
 
@@ -31,13 +32,22 @@ const mockAnalyzeImage = async (): Promise<FoodItem[]> => {
   ];
 };
 
-export const analyzeImage = async (imageFile: File): Promise<FoodItem[]> => {
+export const analyzeImage = async (imageFile: File, apiKey?: string): Promise<FoodItem[]> => {
   try {
     const base64Image = await fileToBase64(imageFile);
+    
+    // Prepare the request body
+    const requestBody: { image: string; apiKey?: string } = { image: base64Image };
+    
+    // Add API key to request body if provided
+    if (apiKey) {
+      requestBody.apiKey = apiKey;
+      console.log("Using provided API key for analysis");
+    }
 
     // ✅ use Supabase Edge Function
     const { data, error } = await supabase.functions.invoke("get-nutrition", {
-      body: { image: base64Image },
+      body: requestBody,
     });
 
     if (error) {
