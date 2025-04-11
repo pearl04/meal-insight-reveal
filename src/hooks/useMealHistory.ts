@@ -61,6 +61,7 @@ export const useMealHistory = () => {
         const typedLogs: MealLog[] = data?.map((log: any) => ({
           id: log.id,
           created_at: log.created_at,
+          // Safely type cast JSON data to our specific types
           food_items: log.food_items as FoodItem[],
           nutrition_summary: log.nutrition_summary as FoodWithNutrition[],
           mock_data: log.mock_data

@@ -8,6 +8,7 @@ import CalculatingState from "./meal-snap/CalculatingState";
 import FoodItemDisplay from "./FoodItemDisplay";
 import NutritionDisplay from "./NutritionDisplay";
 import MockDataAlert from "./meal-snap/MockDataAlert";
+import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 
 const MealSnap = () => {
   const {
@@ -27,14 +28,19 @@ const MealSnap = () => {
     setShowApiInput
   } = useMealSnapState();
 
-  const handleNutritionConfirm = async (foodItems: any[]) => {
+  const handleNutritionConfirm = async (foodItems: FoodItem[]) => {
     try {
       // Get the nutrition data by confirming items
       await handleItemsConfirmed(foodItems);
       
       // Then save the meal log with the nutrition results after they've been calculated
       // We can access the results from the state since handleItemsConfirmed updates it
-      await saveMealLog(foodItems, nutritionResults, isMockData);
+      // Make sure we're only sending items that have complete nutrition information
+      const itemsWithNutrition = nutritionResults.filter(
+        (item): item is FoodWithNutrition => !!item.nutrition
+      );
+      
+      await saveMealLog(foodItems, itemsWithNutrition, isMockData);
     } catch (error) {
       console.error("Error saving meal log:", error);
     }

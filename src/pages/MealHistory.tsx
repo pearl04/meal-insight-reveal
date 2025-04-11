@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/utils';
-import { LockKeyhole } from 'lucide-react';
+import { Lock } from 'lucide-react';
 
 const MealHistoryPage = () => {
   const { mealLogs, isLoading, isHistoryLocked } = useMealHistory();
@@ -39,7 +39,7 @@ const MealHistoryPage = () => {
 
   const renderLockedView = () => (
     <div className="text-center p-6">
-      <LockKeyhole className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+      <Lock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
       <h2 className="text-2xl font-bold mb-2">Meal Insights Locked</h2>
       <p className="text-muted-foreground mb-6">
         Your meal insights history is now part of our Premium Plan.

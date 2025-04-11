@@ -103,6 +103,7 @@ export const saveMealLog = async (
       return null;
     }
 
+    // Insert a single object, not an array
     const { data, error } = await supabase
       .from('meal_logs')
       .insert({
