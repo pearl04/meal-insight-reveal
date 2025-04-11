@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FoodItem } from "@/types/nutrition";
 import { analyzeImage, getNutritionInfo } from "@/services/aiService";
@@ -32,7 +31,7 @@ export const useMealSnapState = () => {
 
     try {
       console.log("Analyzing image with API key:", openRouterKey ? "Provided" : "Not provided");
-      const items = await analyzeImage(file, openRouterKey || undefined);
+      const items = await analyzeImage(file);
       setFoodItems(items);
 
       // Check if this is mock data

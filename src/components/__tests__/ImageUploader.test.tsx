@@ -5,6 +5,9 @@ import { createMockFile, getByAcceptingDroppableFiles } from '@/utils/test-utils
 import { jest, expect, describe, test, beforeEach } from '@jest/globals';
 import '@testing-library/jest-dom';
 
+// Add type assertion to fix TypeScript errors
+const expectWithDOM = expect as any;
+
 describe('ImageUploader', () => {
   const mockOnImageSelect = jest.fn();
 
@@ -14,9 +17,9 @@ describe('ImageUploader', () => {
 
   test('renders upload interface correctly', () => {
     render(<ImageUploader onImageSelect={mockOnImageSelect} />);
-    expect(screen.getByText(/Upload your meal photo/i)).toBeInTheDocument();
-    expect(screen.getByText(/Drag and drop/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Select Image/i })).toBeInTheDocument();
+    expectWithDOM(screen.getByText(/Upload your meal photo/i)).toBeInTheDocument();
+    expectWithDOM(screen.getByText(/Drag and drop/i)).toBeInTheDocument();
+    expectWithDOM(screen.getByRole('button', { name: /Select Image/i })).toBeInTheDocument();
   });
 
   test('handles valid image upload via input', async () => {
