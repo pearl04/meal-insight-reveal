@@ -1,11 +1,11 @@
-
 import '@testing-library/jest-dom';
 
 // Extend the Jest matchers for DOM testing
 declare global {
   namespace jest {
     // The full interface defining all available matchers from jest-dom
-    interface Matchers<R> {
+    // Important: Keep the type parameter consistent with what Jest expects
+    interface Matchers<R, T = any> {
       toBeInTheDocument(): R;
       toHaveClass(className: string): R;
       toBeVisible(): R;
