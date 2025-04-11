@@ -1,6 +1,5 @@
-
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client"; // ✅ adjust if path differs
 
 // === Helpers ===
 const fileToBase64 = (file: File): Promise<string> => {
@@ -32,73 +31,24 @@ const mockAnalyzeImage = async (): Promise<FoodItem[]> => {
   ];
 };
 
-export const analyzeImage = async (imageFile: File, manualApiKey?: string): Promise<FoodItem[]> => {
+export const analyzeImage = async (imageFile: File): Promise<FoodItem[]> => {
   try {
     const base64Image = await fileToBase64(imageFile);
-    
-    // Try to get API key from different sources
-    let apiKey = manualApiKey || '';
-    
-    // If no manual key, try to get from edge function
-    if (!apiKey) {
-      try {
-        console.log("No manual API key provided, trying to fetch from edge function...");
-        const response = await supabase.functions.invoke('get-openrouter-key');
-        
-        if (response.error) {
-          console.error("Error fetching API key from edge function:", response.error);
-        } else if (response.data?.key) {
-          apiKey = response.data.key;
-          console.log("Successfully retrieved API key from edge function");
-        } else {
-          console.log("Edge function response did not contain a key:", response);
-        }
-      } catch (err) {
-        console.error("Exception while fetching API key:", err);
-      }
-    }
-    
-    // If still no key, check environment variable
-    const envKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-    if (!apiKey && envKey) {
-      console.log("Using API key from environment variable");
-      apiKey = envKey;
-    }
-    
-    // Log the key sources for debugging
-    console.info("Key sources available:", {
-      manualKeyProvided: !!manualApiKey,
-      edgeFunctionKeyProvided: !!apiKey && !manualApiKey && !envKey,
-      envKeyProvided: !!envKey
-    });
-    
-    // If no API key available, return mock data
-    if (!apiKey) {
-      console.warn("❗ No API key found from any source. Falling back to mock data.");
-      return mockAnalyzeImage();
-    }
 
-    // API key is available, proceed with actual analysis
-    console.log("Sending image for analysis with API key");
-    const response = await fetch("https://fpwuewixgazaiikqtuwq.functions.supabase.co/get-nutrition", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({ image: base64Image }),
+    // ✅ use Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke("get-nutrition", {
+      body: { image: base64Image },
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Supabase function error (${response.status}):`, errorText);
-      throw new Error(`Supabase function failed with status ${response.status}`);
+    if (error) {
+      console.error("❌ Supabase function error:", error);
+      throw new Error("Supabase function failed");
     }
 
-    const raw = await response.text();
+    const raw = data as string;
     console.log("📦 Supabase Edge Function response:", raw);
 
-    // Try parsing only the array inside
+    // Clean & extract valid JSON
     const cleaned = raw.replace(/^[^{\[]+/, "").replace(/[\n\r\t\s]*$/, "");
     const contentMatch = cleaned.match(/\[\s*\{.*\}\s*\]/s);
     const jsonStr = contentMatch ? contentMatch[0] : cleaned;
@@ -106,7 +56,7 @@ export const analyzeImage = async (imageFile: File, manualApiKey?: string): Prom
 
     if (Array.isArray(foodItems) && foodItems.length > 0) {
       return foodItems.map(item => ({
-        id: item.id || `food-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        id: item.id || `food-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
         name: item.name,
         nutrition: item.nutrition,
         healthy_swap: item.healthy_swap,
