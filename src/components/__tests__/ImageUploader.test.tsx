@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { render, screen, fireEvent } from '@/utils/test-utils';
 import ImageUploader from '../ImageUploader';
@@ -5,14 +6,8 @@ import { createMockFile, getByAcceptingDroppableFiles } from '@/utils/test-utils
 import { jest, expect, describe, test, beforeEach } from '@jest/globals';
 import '@testing-library/jest-dom/extend-expect';
 
-// Add type assertion to fix TypeScript errors
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toBeInTheDocument(): R;
-    }
-  }
-}
+// Remove the redundant type declaration that's causing the conflict
+// No need to redeclare the Matchers interface since it's already defined in the type files
 
 describe('ImageUploader', () => {
   const mockOnImageSelect = jest.fn();
@@ -23,9 +18,9 @@ describe('ImageUploader', () => {
 
   test('renders upload interface correctly', () => {
     render(<ImageUploader onImageSelect={mockOnImageSelect} />);
-    (expect(screen.getByText(/Upload your meal photo/i)) as any).toBeInTheDocument();
-    (expect(screen.getByText(/Drag and drop/i)) as any).toBeInTheDocument();
-    (expect(screen.getByRole('button', { name: /Select Image/i })) as any).toBeInTheDocument();
+    expect(screen.getByText(/Upload your meal photo/i)).toBeInTheDocument();
+    expect(screen.getByText(/Drag and drop/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Select Image/i })).toBeInTheDocument();
   });
 
   test('handles valid image upload via input', async () => {
