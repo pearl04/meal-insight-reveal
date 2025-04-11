@@ -10,7 +10,7 @@ import { analyzeImage, getNutritionInfo } from "@/services/aiService";
 import LoadingSpinner from "./LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Key, Info, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Key, Info, AlertTriangle, Check, Circle } from "lucide-react"; // Replaced CheckCircle2 with Check or Circle
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 enum AppState {
