@@ -34,8 +34,11 @@ Object.defineProperty(window, 'IntersectionObserver', {
 });
 
 // Register custom queries
-import { configure, screen } from '@testing-library/react';
+import { configure } from '@testing-library/react';
 import { getByAcceptingDroppableFiles } from './src/utils/test-utils';
 
-// Add the custom query to screen
-screen.getByAcceptingDroppableFiles = getByAcceptingDroppableFiles;
+// Extend the queries with custom ones
+const customQueries = { getByAcceptingDroppableFiles };
+
+// Configure custom queries to be available
+configure({ queries: customQueries });
