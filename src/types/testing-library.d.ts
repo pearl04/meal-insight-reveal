@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 declare global {
   namespace jest {
     // The full interface defining all available matchers from jest-dom
-    interface Matchers<R, T = {}> {
+    interface Matchers<R> {
       toBeInTheDocument(): R;
       toHaveClass(className: string): R;
       toBeVisible(): R;
