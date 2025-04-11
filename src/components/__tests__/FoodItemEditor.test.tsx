@@ -4,9 +4,10 @@ import { render, screen, fireEvent, waitFor } from '@/utils/test-utils';
 import FoodItemEditor from '../FoodItemEditor';
 import { jest, expect, describe, test, beforeEach } from '@jest/globals';
 import '@testing-library/jest-dom';
+import { FoodItem } from '@/types/nutrition';
 
 describe('FoodItemEditor', () => {
-  const mockDetectedItems = [
+  const mockDetectedItems: FoodItem[] = [
     { id: '1', name: 'Apple' },
     { id: '2', name: 'Chicken' }
   ];

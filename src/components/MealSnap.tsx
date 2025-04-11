@@ -1,10 +1,12 @@
+
 import React, { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { toast } from "sonner";
 import ImageUploader from "./ImageUploader";
 import NutritionDisplay from "./NutritionDisplay";
-import FoodItemDisplay from "./FoodItemDisplay"; // Import the FoodItemDisplay component
-import { FoodItem, analyzeImage, getNutritionInfo } from "@/services/aiService";
+import FoodItemDisplay from "./FoodItemDisplay";
+import { FoodItem } from "@/types/nutrition";
+import { analyzeImage, getNutritionInfo } from "@/services/aiService";
 import LoadingSpinner from "./LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

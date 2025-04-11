@@ -1,6 +1,6 @@
 
 import { analyzeImage, getNutritionInfo } from '../aiService';
-import { FoodItem } from '@/components/FoodItemEditor';
+import { FoodItem } from '@/types/nutrition';
 
 describe('AI Service', () => {
   // Create a mock file for testing

@@ -1,5 +1,6 @@
+
 import React from "react";
-import { FoodItem } from "@/services/aiService";
+import { FoodItem } from "@/types/nutrition";
 
 interface Props {
   items: FoodItem[];

@@ -1,21 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Check, Plus } from "lucide-react";
-
-export interface FoodItem {
-  id: string;
-  name: string;
-  nutrition?: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
-  healthy_swap?: string;
-  rating?: number;
-}
+import { FoodItem } from "@/types/nutrition";
 
 interface FoodItemEditorProps {
   detectedItems: FoodItem[];
