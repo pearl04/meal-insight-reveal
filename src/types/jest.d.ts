@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 // These type definitions allow us to use the custom matchers in our tests
 declare global {
   namespace jest {
-    interface Matchers<R> {
+    interface Matchers<R, T = any> {
       toBeInTheDocument(): R;
       toHaveClass(className: string): R;
       toBeVisible(): R;
