@@ -1,3 +1,4 @@
+
 // Import types from our new type definition file
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 
@@ -12,6 +13,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 const mockAnalyzeImage = async (): Promise<FoodItem[]> => {
+  console.log("⚠️ Using mock data for food detection");
   return [
     {
       id: `food-${Date.now()}-1`,
@@ -127,10 +129,11 @@ Strict rule: Respond with nothing else except the valid JSON array.
     });
 
     const raw = await response.text();
-    console.log("📦 Full raw response (status", response.status, "):", raw);
+    console.log("📦 OpenRouter API response status:", response.status);
 
     if (!response.ok) {
-      throw new Error(`❌ OpenRouter API returned status ${response.status}: ${raw}`);
+      console.error(`❌ OpenRouter API returned status ${response.status}:`, raw);
+      throw new Error(`OpenRouter API returned status ${response.status}: ${raw}`);
     }
 
     // Clean unpredictable text before/after the array
@@ -139,6 +142,8 @@ Strict rule: Respond with nothing else except the valid JSON array.
       const contentMatch = cleanedContent.match(/\[\s*\{.*\}\s*\]/s);
       const jsonStr = contentMatch ? contentMatch[0] : cleanedContent;
       const foodItems = JSON.parse(jsonStr);
+
+      console.log("✅ Successfully parsed OpenRouter API response");
 
       if (Array.isArray(foodItems) && foodItems.length > 0) {
         return foodItems.map(item => ({

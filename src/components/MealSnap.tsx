@@ -10,12 +10,13 @@ import { analyzeImage, getNutritionInfo } from "@/services/aiService";
 import LoadingSpinner from "./LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Key, Info, AlertTriangle } from "lucide-react";
+import { Key, Info, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 enum AppState {
   UPLOAD,
   ANALYZING,
-  CONFIRMING_ITEMS, // New state for confirming detected items
+  CONFIRMING_ITEMS,
   CALCULATING,
   RESULTS
 }
@@ -28,16 +29,25 @@ const MealSnap = () => {
   const [openRouterKey, setOpenRouterKey] = useState<string>("");
   const [showApiInput, setShowApiInput] = useState<boolean>(false);
   const [hasErrored, setHasErrored] = useState<boolean>(false);
+  const [isMockData, setIsMockData] = useState<boolean>(false);
   const { toast: uiToast } = useToast();
 
   const handleImageSelect = async (file: File) => {
     setSelectedImage(file);
     setAppState(AppState.ANALYZING);
     setHasErrored(false);
+    setIsMockData(false);
 
     try {
+      console.log("Analyzing image with API key:", openRouterKey ? "Provided" : "Not provided");
       const items = await analyzeImage(file, openRouterKey || undefined);
       setFoodItems(items);
+
+      // Check if this is mock data
+      if (!openRouterKey && !import.meta.env.VITE_OPENROUTER_API_KEY) {
+        console.log("Using mock data as no API key is available");
+        setIsMockData(true);
+      }
 
       if (items.length > 0) {
         setAppState(AppState.CONFIRMING_ITEMS);
@@ -79,11 +89,19 @@ const MealSnap = () => {
     setSelectedImage(null);
     setFoodItems([]);
     setNutritionResults([]);
+    setIsMockData(false);
     setAppState(AppState.UPLOAD);
   };
 
   const toggleApiInput = () => {
     setShowApiInput(!showApiInput);
+  };
+
+  const saveApiKey = () => {
+    if (openRouterKey.trim()) {
+      toast.success("API key saved for this session");
+    }
+    setShowApiInput(false);
   };
 
   const renderApiKeyInput = () => {
@@ -104,26 +122,42 @@ const MealSnap = () => {
     }
 
     return (
-      <div className="mt-4 p-3 border rounded-lg bg-slate-50">
-        <div className="flex items-start gap-2 mb-2">
-          <Info size={16} className="text-slate-500 mt-1 flex-shrink-0" />
-          <p className="text-xs text-slate-600">
-            Enter your OpenRouter API key for better food detection. Your key is only used in this session and not stored.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Input
-            type="password"
-            placeholder="OpenRouter API Key"
-            value={openRouterKey}
-            onChange={(e) => setOpenRouterKey(e.target.value)}
-            className="text-sm"
-          />
-          <Button size="sm" variant="outline" onClick={toggleApiInput}>
-            Done
-          </Button>
-        </div>
-      </div>
+      <Card className="mt-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Key size={14} />
+            OpenRouter API Key
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start gap-2 mb-3">
+            <Info size={16} className="text-slate-500 mt-1 flex-shrink-0" />
+            <p className="text-xs text-slate-600">
+              Enter your OpenRouter API key for better food detection. Your key is only used in this session and not stored.
+              <a 
+                href="https://openrouter.ai/keys" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 block hover:underline mt-1"
+              >
+                Get an API key
+              </a>
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="password"
+              placeholder="OpenRouter API Key"
+              value={openRouterKey}
+              onChange={(e) => setOpenRouterKey(e.target.value)}
+              className="text-sm"
+            />
+            <Button size="sm" variant="default" onClick={saveApiKey}>
+              Save
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   };
 
@@ -160,7 +194,27 @@ const MealSnap = () => {
 
       case AppState.CONFIRMING_ITEMS:
         return (
-          <FoodItemDisplay items={foodItems} onConfirm={handleItemsConfirmed} />
+          <>
+            <FoodItemDisplay items={foodItems} onConfirm={handleItemsConfirmed} />
+            {isMockData && (
+              <div className="mt-4 p-3 border border-yellow-200 rounded-lg bg-yellow-50 flex items-start gap-2">
+                <AlertTriangle size={16} className="text-yellow-500 mt-1 flex-shrink-0" />
+                <p className="text-xs text-yellow-600">
+                  This is sample data as no OpenRouter API key was found. For accurate food detection, please add an OpenRouter API key.
+                  <Button
+                    variant="link"
+                    className="text-xs text-blue-600 p-0 h-auto"
+                    onClick={() => {
+                      resetApp();
+                      setShowApiInput(true);
+                    }}
+                  >
+                    Add API key
+                  </Button>
+                </p>
+              </div>
+            )}
+          </>
         );
 
       case AppState.CALCULATING:
@@ -175,7 +229,19 @@ const MealSnap = () => {
         );
 
       case AppState.RESULTS:
-        return <NutritionDisplay foodItems={nutritionResults} onReset={resetApp} />;
+        return (
+          <>
+            <NutritionDisplay foodItems={nutritionResults} onReset={resetApp} />
+            {isMockData && (
+              <div className="mt-4 p-3 border border-yellow-200 rounded-lg bg-yellow-50 flex items-start gap-2">
+                <AlertTriangle size={16} className="text-yellow-500 mt-1 flex-shrink-0" />
+                <p className="text-xs text-yellow-600">
+                  This is sample data as no OpenRouter API key was found. For accurate food detection, please add an OpenRouter API key.
+                </p>
+              </div>
+            )}
+          </>
+        );
 
       default:
         return null;
