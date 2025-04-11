@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 
 declare global {
   namespace jest {
-    interface Matchers<R, T = {}> {
+    interface Matchers<R, T> {
       toBeInTheDocument(): R;
       toHaveClass(className: string): R;
       toBeVisible(): R;
@@ -13,4 +13,4 @@ declare global {
       toHaveValue(value: any): R;
     }
   }
-} 
+}
