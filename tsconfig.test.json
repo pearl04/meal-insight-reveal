@@ -1,3 +1,4 @@
+
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
@@ -12,6 +13,7 @@
     "src/**/*.tsx",
     "jest.setup.js",
     "src/types/jest.d.ts",
-    "src/types/testing-library.d.ts"
+    "src/types/testing-library.d.ts",
+    "src/types/nutrition.d.ts"
   ]
 }

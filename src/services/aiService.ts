@@ -1,26 +1,5 @@
-
-// === Types ===
-export interface FoodItem {
-  id: string;
-  name: string;
-  nutrition?: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
-  healthy_swap?: string;
-  rating?: number;
-}
-
-export interface FoodWithNutrition extends FoodItem {
-  nutrition: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
-}
+// Import types from our new type definition file
+import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 
 // === Helpers ===
 const fileToBase64 = (file: File): Promise<string> => {
@@ -61,7 +40,6 @@ const mockAnalyzeImage = async (): Promise<FoodItem[]> => {
   ];
 };
 
-// === Get API Key from Supabase Edge Function ===
 const getOpenRouterKey = async (): Promise<string | null> => {
   try {
     const { supabase } = await import("@/integrations/supabase/client");
@@ -79,7 +57,6 @@ const getOpenRouterKey = async (): Promise<string | null> => {
   }
 };
 
-// === Main Analyzer ===
 export const analyzeImage = async (imageFile: File, manualApiKey?: string): Promise<FoodItem[]> => {
   try {
     const base64Image = await fileToBase64(imageFile);
@@ -185,7 +162,6 @@ Strict rule: Respond with nothing else except the valid JSON array.
   }
 };
 
-// === Nutrition Extractor (fallback for name-only items) ===
 export const getNutritionInfo = async (foodItems: FoodItem[]): Promise<FoodWithNutrition[]> => {
   // Filter out items that already have nutrition info
   const itemsWithNutrition = foodItems.filter(item => item.nutrition);

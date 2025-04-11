@@ -30,4 +30,5 @@ declare module 'lucide-react' {
   export const GripVertical: FC<IconProps>;
   export const ChevronUp: FC<IconProps>;
   export const PanelLeft: FC<IconProps>;
+  export const AlertTriangle: FC<IconProps>;
 } 

@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@/utils/test-utils';
-import NutritionDisplay, { FoodWithNutrition } from '../NutritionDisplay';
+import NutritionDisplay from '../NutritionDisplay';
+import { FoodWithNutrition } from '@/types/nutrition';
 
 describe('NutritionDisplay', () => {
   const mockFoodItems: FoodWithNutrition[] = [

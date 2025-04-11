@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { render, screen, waitFor } from '@/utils/test-utils';
 import MealSnap from '../MealSnap';
 import { analyzeImage, getNutritionInfo } from '@/services/aiService';
 import { createMockFile } from '@/utils/test-utils';
-import { FoodItem } from '../FoodItemEditor';
-import { FoodWithNutrition } from '../NutritionDisplay';
+import { FoodItem } from '@/types/nutrition';
+import { FoodWithNutrition } from '@/types/nutrition';
 
 // Mock the AI service module
 jest.mock('@/services/aiService', () => ({
