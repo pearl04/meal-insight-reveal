@@ -1,6 +1,5 @@
-
+import { supabase } from "@/integrations/supabase/client";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
-import { supabase } from "@/integrations/supabase/client"; // ✅ adjust if path differs
 
 // === Helpers ===
 const fileToBase64 = (file: File): Promise<string> => {
@@ -88,4 +87,39 @@ export const getNutritionInfo = async (foodItems: FoodItem[]): Promise<FoodWithN
       ...item,
       nutrition: item.nutrition!,
     }));
+};
+
+export const saveMealLog = async (
+  foodItems: FoodItem[], 
+  nutritionSummary: FoodWithNutrition[], 
+  isMockData: boolean = false
+) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.error("No authenticated user found");
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from('meal_logs')
+      .insert({
+        user_id: user.id,
+        food_items: foodItems,
+        nutrition_summary: nutritionSummary,
+        mock_data: isMockData
+      })
+      .select();
+
+    if (error) {
+      console.error("Error saving meal log:", error);
+      return null;
+    }
+
+    return data;
+  } catch (err) {
+    console.error("Unexpected error saving meal log:", err);
+    return null;
+  }
 };

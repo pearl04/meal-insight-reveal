@@ -1,6 +1,7 @@
 
 import React from "react";
 import { useMealSnapState, AppState } from "@/hooks/useMealSnapState";
+import { saveMealLog } from "@/services/aiService";
 import UploadState from "./meal-snap/UploadState";
 import AnalyzingState from "./meal-snap/AnalyzingState";
 import CalculatingState from "./meal-snap/CalculatingState";
@@ -26,6 +27,17 @@ const MealSnap = () => {
     setShowApiInput
   } = useMealSnapState();
 
+  const handleNutritionConfirm = async (foodItems: any[]) => {
+    try {
+      const nutritionData = await handleItemsConfirmed(foodItems);
+      
+      // Save meal log to database
+      await saveMealLog(foodItems, nutritionData, isMockData);
+    } catch (error) {
+      console.error("Error saving meal log:", error);
+    }
+  };
+
   const renderStep = () => {
     switch (appState) {
       case AppState.UPLOAD:
@@ -48,7 +60,7 @@ const MealSnap = () => {
       case AppState.CONFIRMING_ITEMS:
         return (
           <>
-            <FoodItemDisplay items={foodItems} onConfirm={handleItemsConfirmed} />
+            <FoodItemDisplay items={foodItems} onConfirm={handleNutritionConfirm} />
             {isMockData && <MockDataAlert resetApp={resetApp} setShowApiInput={setShowApiInput} />}
           </>
         );

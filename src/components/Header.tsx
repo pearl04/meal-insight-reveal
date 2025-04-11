@@ -1,18 +1,21 @@
 
-import React from "react";
-import { Utensils } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Book } from "lucide-react";
 
 const Header = () => {
   return (
-    <header className="w-full py-4 border-b">
-      <div className="container flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Utensils className="h-6 w-6 text-meal-500" />
-          <h1 className="text-xl font-semibold">MealSnap</h1>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Nutrition at a glance
-        </div>
+    <header className="bg-background border-b py-4">
+      <div className="container flex justify-between items-center">
+        <Link to="/" className="text-xl font-bold">
+          MealSnap
+        </Link>
+        <Link to="/meal-history">
+          <Button variant="outline" size="sm">
+            <Book className="mr-2 h-4 w-4" />
+            Meal History
+          </Button>
+        </Link>
       </div>
     </header>
   );
