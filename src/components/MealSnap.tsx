@@ -1,10 +1,8 @@
-
 import React, { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import ImageUploader from "./ImageUploader";
-import FoodItemEditor, { FoodItem } from "./FoodItemEditor";
-import NutritionDisplay, { FoodWithNutrition } from "./NutritionDisplay";
-import { analyzeImage, getNutritionInfo } from "@/services/aiService";
+import NutritionDisplay from "./NutritionDisplay";
+import { FoodItem, analyzeImage, getNutritionInfo } from "@/services/aiService";
 import LoadingSpinner from "./LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,7 +11,6 @@ import { Key, Info } from "lucide-react";
 enum AppState {
   UPLOAD,
   ANALYZING,
-  EDIT,
   CALCULATING,
   RESULTS
 }
@@ -21,8 +18,7 @@ enum AppState {
 const MealSnap = () => {
   const [appState, setAppState] = useState<AppState>(AppState.UPLOAD);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [detectedItems, setDetectedItems] = useState<FoodItem[]>([]);
-  const [nutritionResults, setNutritionResults] = useState<FoodWithNutrition[]>([]);
+  const [nutritionResults, setNutritionResults] = useState<FoodItem[]>([]);
   const [openRouterKey, setOpenRouterKey] = useState<string>("");
   const [showApiInput, setShowApiInput] = useState<boolean>(false);
   const { toast } = useToast();
@@ -30,12 +26,14 @@ const MealSnap = () => {
   const handleImageSelect = async (file: File) => {
     setSelectedImage(file);
     setAppState(AppState.ANALYZING);
-    
+
     try {
-      // Pass the OpenRouter API key to the analyzeImage function
       const items = await analyzeImage(file, openRouterKey || undefined);
-      setDetectedItems(items);
-      setAppState(AppState.EDIT);
+
+      setAppState(AppState.CALCULATING);
+      const nutritionData = await getNutritionInfo(items);
+      setNutritionResults(nutritionData);
+      setAppState(AppState.RESULTS);
     } catch (error) {
       toast({
         variant: "destructive",
@@ -46,35 +44,8 @@ const MealSnap = () => {
     }
   };
 
-  const handleConfirmItems = async (confirmedItems: FoodItem[]) => {
-    if (confirmedItems.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "No food items",
-        description: "Please add at least one food item to analyze.",
-      });
-      return;
-    }
-
-    setAppState(AppState.CALCULATING);
-    
-    try {
-      const nutritionData = await getNutritionInfo(confirmedItems);
-      setNutritionResults(nutritionData);
-      setAppState(AppState.RESULTS);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Calculation failed",
-        description: "We couldn't calculate nutrition information. Please try again.",
-      });
-      setAppState(AppState.EDIT);
-    }
-  };
-
   const resetApp = () => {
     setSelectedImage(null);
-    setDetectedItems([]);
     setNutritionResults([]);
     setAppState(AppState.UPLOAD);
   };
@@ -87,9 +58,9 @@ const MealSnap = () => {
     if (!showApiInput) {
       return (
         <div className="mt-4 flex justify-center">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={toggleApiInput}
             className="text-xs flex items-center gap-1"
           >
@@ -133,21 +104,20 @@ const MealSnap = () => {
             {renderApiKeyInput()}
           </>
         );
-        
+
       case AppState.ANALYZING:
         return (
           <div className="bg-white rounded-xl border p-6 shadow-sm flex flex-col items-center">
             <LoadingSpinner size="large" className="mb-4" />
             <h2 className="text-xl font-semibold mb-2">Analyzing your meal...</h2>
             <p className="text-muted-foreground text-center animate-pulse-opacity">
-              {openRouterKey ? "Using OpenRouter AI to identify food items" : "Our AI is identifying the food items in your image"}
+              {openRouterKey
+                ? "Using OpenRouter AI to identify food items"
+                : "Our AI is identifying the food items in your image"}
             </p>
           </div>
         );
-        
-      case AppState.EDIT:
-        return <FoodItemEditor detectedItems={detectedItems} onConfirm={handleConfirmItems} />;
-        
+
       case AppState.CALCULATING:
         return (
           <div className="bg-white rounded-xl border p-6 shadow-sm flex flex-col items-center">
@@ -158,20 +128,16 @@ const MealSnap = () => {
             </p>
           </div>
         );
-        
+
       case AppState.RESULTS:
         return <NutritionDisplay foodItems={nutritionResults} onReset={resetApp} />;
-        
+
       default:
         return null;
     }
   };
 
-  return (
-    <div className="w-full max-w-md mx-auto">
-      {renderStep()}
-    </div>
-  );
+  return <div className="w-full max-w-md mx-auto">{renderStep()}</div>;
 };
 
 export default MealSnap;

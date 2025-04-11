@@ -7,6 +7,14 @@ import { X, Check, Plus } from "lucide-react";
 export interface FoodItem {
   id: string;
   name: string;
+  nutrition?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  healthy_swap?: string;
+  rating?: number;
 }
 
 interface FoodItemEditorProps {
