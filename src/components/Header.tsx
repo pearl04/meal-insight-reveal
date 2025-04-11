@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Book } from "lucide-react";
+import { Utensils } from "lucide-react";
 
 const Header = () => {
   return (
@@ -12,7 +12,7 @@ const Header = () => {
         </Link>
         <Link to="/meal-history">
           <Button variant="outline" size="sm">
-            <Book className="mr-2 h-4 w-4" />
+            <Utensils className="mr-2 h-4 w-4" />
             Meal History
           </Button>
         </Link>
