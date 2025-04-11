@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
 
 interface MealLog {
   id: string;
@@ -56,7 +57,16 @@ export const useMealHistory = () => {
           return;
         }
 
-        setMealLogs(data || []);
+        // Transform the data to ensure proper typing
+        const typedLogs: MealLog[] = data?.map((log: any) => ({
+          id: log.id,
+          created_at: log.created_at,
+          food_items: log.food_items as FoodItem[],
+          nutrition_summary: log.nutrition_summary as FoodWithNutrition[],
+          mock_data: log.mock_data
+        })) || [];
+
+        setMealLogs(typedLogs);
       } catch (err) {
         setError("Error fetching meal history");
         toast.error("Could not load meal history");

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 

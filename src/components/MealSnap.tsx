@@ -29,10 +29,13 @@ const MealSnap = () => {
 
   const handleNutritionConfirm = async (foodItems: any[]) => {
     try {
+      // Get the nutrition data by confirming items
       const nutritionData = await handleItemsConfirmed(foodItems);
       
-      // Save meal log to database
-      await saveMealLog(foodItems, nutritionData, isMockData);
+      // Then save the meal log with the obtained nutrition data
+      if (nutritionData) {
+        await saveMealLog(foodItems, nutritionData, isMockData);
+      }
     } catch (error) {
       console.error("Error saving meal log:", error);
     }
