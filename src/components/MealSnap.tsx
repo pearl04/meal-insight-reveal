@@ -1,16 +1,20 @@
+
 import React, { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import ImageUploader from "./ImageUploader";
 import NutritionDisplay from "./NutritionDisplay";
+import FoodItemDisplay from "./FoodItemDisplay"; // Import the FoodItemDisplay component
 import { FoodItem, analyzeImage, getNutritionInfo } from "@/services/aiService";
 import LoadingSpinner from "./LoadingSpinner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Key, Info } from "lucide-react";
+import { Key, Info, AlertCircle } from "lucide-react";
 
 enum AppState {
   UPLOAD,
   ANALYZING,
+  CONFIRMING_ITEMS, // New state for confirming detected items
   CALCULATING,
   RESULTS
 }
@@ -18,27 +22,53 @@ enum AppState {
 const MealSnap = () => {
   const [appState, setAppState] = useState<AppState>(AppState.UPLOAD);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [foodItems, setFoodItems] = useState<FoodItem[]>([]); 
   const [nutritionResults, setNutritionResults] = useState<FoodItem[]>([]);
   const [openRouterKey, setOpenRouterKey] = useState<string>("");
   const [showApiInput, setShowApiInput] = useState<boolean>(false);
-  const { toast } = useToast();
+  const [hasErrored, setHasErrored] = useState<boolean>(false);
+  const { toast: uiToast } = useToast();
 
   const handleImageSelect = async (file: File) => {
     setSelectedImage(file);
     setAppState(AppState.ANALYZING);
+    setHasErrored(false);
 
     try {
       const items = await analyzeImage(file, openRouterKey || undefined);
+      setFoodItems(items);
 
-      setAppState(AppState.CALCULATING);
-      const nutritionData = await getNutritionInfo(items);
+      if (items.length > 0) {
+        setAppState(AppState.CONFIRMING_ITEMS);
+      } else {
+        toast.error("No food items were detected in the image");
+        resetApp();
+      }
+    } catch (error) {
+      console.error("Analysis error:", error);
+      setHasErrored(true);
+      uiToast({
+        variant: "destructive",
+        title: "Analysis failed",
+        description: "We couldn't analyze your image. Please try again or check your API key.",
+      });
+      setAppState(AppState.UPLOAD);
+    }
+  };
+
+  const handleItemsConfirmed = async (confirmedItems: FoodItem[]) => {
+    setAppState(AppState.CALCULATING);
+    
+    try {
+      const nutritionData = await getNutritionInfo(confirmedItems);
       setNutritionResults(nutritionData);
       setAppState(AppState.RESULTS);
     } catch (error) {
-      toast({
+      console.error("Nutrition calculation error:", error);
+      uiToast({
         variant: "destructive",
-        title: "Analysis failed",
-        description: "We couldn't analyze your image. Please try again.",
+        title: "Calculation failed",
+        description: "We couldn't calculate nutrition information. Please try again.",
       });
       setAppState(AppState.UPLOAD);
     }
@@ -46,6 +76,7 @@ const MealSnap = () => {
 
   const resetApp = () => {
     setSelectedImage(null);
+    setFoodItems([]);
     setNutritionResults([]);
     setAppState(AppState.UPLOAD);
   };
@@ -101,6 +132,14 @@ const MealSnap = () => {
         return (
           <>
             <ImageUploader onImageSelect={handleImageSelect} />
+            {hasErrored && (
+              <div className="mt-4 p-3 border border-red-200 rounded-lg bg-red-50 flex items-start gap-2">
+                <AlertCircle size={16} className="text-red-500 mt-1 flex-shrink-0" />
+                <p className="text-xs text-red-600">
+                  There was an error analyzing your last image. Please try again or check your API key.
+                </p>
+              </div>
+            )}
             {renderApiKeyInput()}
           </>
         );
@@ -116,6 +155,11 @@ const MealSnap = () => {
                 : "Our AI is identifying the food items in your image"}
             </p>
           </div>
+        );
+
+      case AppState.CONFIRMING_ITEMS:
+        return (
+          <FoodItemDisplay items={foodItems} onConfirm={handleItemsConfirmed} />
         );
 
       case AppState.CALCULATING:
