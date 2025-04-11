@@ -1,13 +1,9 @@
-
 import React from 'react';
 import { render, screen, fireEvent } from '@/utils/test-utils';
 import ImageUploader from '../ImageUploader';
 import { createMockFile, getByAcceptingDroppableFiles } from '@/utils/test-utils';
 import { jest, expect, describe, test, beforeEach } from '@jest/globals';
-import '@testing-library/jest-dom/extend-expect';
-
-// Remove the redundant type declaration that's causing the conflict
-// No need to redeclare the Matchers interface since it's already defined in the type files
+import '@testing-library/jest-dom';
 
 describe('ImageUploader', () => {
   const mockOnImageSelect = jest.fn();
