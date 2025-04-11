@@ -22,10 +22,17 @@ serve(async (req) => {
     
     // If no API key in header, try environment variable
     if (!apiKey) {
+      console.log("No API key in Authorization header, checking environment variable");
       apiKey = Deno.env.get("OPENROUTER_API_KEY") || "";
+      if (apiKey) {
+        console.log("Found API key in environment variable");
+      }
+    } else {
+      console.log("Using API key from Authorization header");
     }
     
     if (!apiKey) {
+      console.error("No OpenRouter API key found from any source");
       return new Response(
         JSON.stringify({ 
           error: "Missing API key", 
@@ -38,6 +45,7 @@ serve(async (req) => {
       );
     }
 
+    console.log("Making request to OpenRouter API");
     const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {

@@ -29,19 +29,24 @@ export const useMealSnapState = () => {
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
+        console.log('Attempting to fetch API key from edge function...');
+        
         const { data, error } = await supabase.functions.invoke('get-openrouter-key');
         
         if (error) {
           console.error('Error fetching API key:', error);
+          console.log('No API key found in edge function, will use manual input if provided');
           return;
         }
         
         if (data?.key) {
-          setOpenRouterKey(data.key);
           console.log('Successfully fetched OpenRouter API key from edge function');
+          setOpenRouterKey(data.key);
+        } else {
+          console.log('Edge function returned no API key');
         }
       } catch (err) {
-        console.error('Failed to fetch API key:', err);
+        console.error('Exception while fetching API key:', err);
       }
     };
     

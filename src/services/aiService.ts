@@ -42,28 +42,33 @@ export const analyzeImage = async (imageFile: File, manualApiKey?: string): Prom
     // If no manual key, try to get from edge function
     if (!apiKey) {
       try {
-        const { data, error } = await supabase.functions.invoke('get-openrouter-key');
-        if (data?.key && !error) {
-          apiKey = data.key;
+        console.log("No manual API key provided, trying to fetch from edge function...");
+        const response = await supabase.functions.invoke('get-openrouter-key');
+        
+        if (response.error) {
+          console.error("Error fetching API key from edge function:", response.error);
+        } else if (response.data?.key) {
+          apiKey = response.data.key;
           console.log("Successfully retrieved API key from edge function");
-        } else if (error) {
-          console.error("Error fetching API key from edge function:", error);
+        } else {
+          console.log("Edge function response did not contain a key:", response);
         }
       } catch (err) {
-        console.error("Failed to fetch API key:", err);
+        console.error("Exception while fetching API key:", err);
       }
     }
     
     // If still no key, check environment variable
     const envKey = import.meta.env.VITE_OPENROUTER_API_KEY;
     if (!apiKey && envKey) {
+      console.log("Using API key from environment variable");
       apiKey = envKey;
     }
     
     // Log the key sources for debugging
     console.info("Key sources available:", {
       manualKeyProvided: !!manualApiKey,
-      edgeFunctionKeyProvided: !!apiKey && !manualApiKey,
+      edgeFunctionKeyProvided: !!apiKey && !manualApiKey && !envKey,
       envKeyProvided: !!envKey
     });
     
@@ -74,6 +79,7 @@ export const analyzeImage = async (imageFile: File, manualApiKey?: string): Prom
     }
 
     // API key is available, proceed with actual analysis
+    console.log("Sending image for analysis with API key");
     const response = await fetch("https://fpwuewixgazaiikqtuwq.functions.supabase.co/get-nutrition", {
       method: "POST",
       headers: { 

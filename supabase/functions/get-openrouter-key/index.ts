@@ -1,4 +1,5 @@
 
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -16,8 +17,10 @@ serve(async (req) => {
   try {
     const openRouterKey = Deno.env.get("OPENROUTER_API_KEY");
     
+    console.log("Checking for OPENROUTER_API_KEY:", openRouterKey ? "Found key" : "No key found");
+    
     if (!openRouterKey) {
-      // Return a 404 instead of 500 to indicate the key is not found but it's not a server error
+      // Return a 404 to indicate the key is not found
       return new Response(
         JSON.stringify({ 
           error: "API key not found", 
