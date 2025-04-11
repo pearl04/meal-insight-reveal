@@ -1,9 +1,10 @@
 
 import '@testing-library/jest-dom';
 
+// These type definitions allow us to use the custom matchers in our tests
 declare global {
   namespace jest {
-    interface Matchers<R, T> {
+    interface Matchers<R> {
       toBeInTheDocument(): R;
       toHaveClass(className: string): R;
       toBeVisible(): R;
@@ -29,3 +30,6 @@ declare module '@testing-library/react' {
     findByAcceptingDroppableFiles: (container: HTMLElement) => Promise<HTMLElement>;
   }
 }
+
+// Export empty to make it a module
+export {};
