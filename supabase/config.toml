@@ -4,9 +4,9 @@ project_id = "fpwuewixgazaiikqtuwq"
 [functions.get-nutrition]
 enabled = true
 verify_jwt = false
-entrypoint = "index.ts"
+entrypoint = "functions/get-nutrition/index.ts"
 
 [functions.get-openrouter-key]
 enabled = true
 verify_jwt = false
-entrypoint = "index.ts"
+entrypoint = "functions/get-openrouter-key/index.ts"
