@@ -30,12 +30,11 @@ const MealSnap = () => {
   const handleNutritionConfirm = async (foodItems: any[]) => {
     try {
       // Get the nutrition data by confirming items
-      const nutritionData = await handleItemsConfirmed(foodItems);
+      await handleItemsConfirmed(foodItems);
       
-      // Then save the meal log with the obtained nutrition data
-      if (nutritionData) {
-        await saveMealLog(foodItems, nutritionData, isMockData);
-      }
+      // Then save the meal log with the nutrition results after they've been calculated
+      // We can access the results from the state since handleItemsConfirmed updates it
+      await saveMealLog(foodItems, nutritionResults, isMockData);
     } catch (error) {
       console.error("Error saving meal log:", error);
     }
