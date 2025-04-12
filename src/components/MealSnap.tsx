@@ -7,7 +7,6 @@ import AnalyzingState from "./meal-snap/AnalyzingState";
 import CalculatingState from "./meal-snap/CalculatingState";
 import FoodItemDisplay from "./FoodItemDisplay";
 import NutritionDisplay from "./NutritionDisplay";
-import MockDataAlert from "./meal-snap/MockDataAlert";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 
 const MealSnap = () => {
@@ -15,17 +14,10 @@ const MealSnap = () => {
     appState,
     foodItems,
     nutritionResults,
-    openRouterKey,
-    showApiInput,
     hasErrored,
-    isMockData,
-    setOpenRouterKey,
     handleImageSelect,
     handleItemsConfirmed,
     resetApp,
-    toggleApiInput,
-    saveApiKey,
-    setShowApiInput
   } = useMealSnapState();
 
   const handleNutritionConfirm = async (foodItems: FoodItem[]) => {
@@ -40,7 +32,7 @@ const MealSnap = () => {
         (item): item is FoodWithNutrition => !!item.nutrition
       );
       
-      await saveMealLog(foodItems, itemsWithNutrition, isMockData);
+      await saveMealLog(foodItems, itemsWithNutrition);
     } catch (error) {
       console.error("Error saving meal log:", error);
     }
@@ -53,24 +45,18 @@ const MealSnap = () => {
           <UploadState
             onImageSelect={handleImageSelect}
             hasErrored={hasErrored}
-            showApiInput={showApiInput}
-            toggleApiInput={toggleApiInput}
-            openRouterKey={openRouterKey}
-            setOpenRouterKey={setOpenRouterKey}
-            saveApiKey={saveApiKey}
-            setShowApiInput={setShowApiInput}
           />
         );
 
       case AppState.ANALYZING:
-        return <AnalyzingState usingCustomApiKey={!!openRouterKey} />;
+        return <AnalyzingState usingCustomApiKey={false} />;
 
       case AppState.CONFIRMING_ITEMS:
         return (
-          <>
-            <FoodItemDisplay items={foodItems} onConfirm={handleNutritionConfirm} />
-            {isMockData && <MockDataAlert resetApp={resetApp} setShowApiInput={setShowApiInput} />}
-          </>
+          <FoodItemDisplay 
+            items={foodItems} 
+            onConfirm={handleNutritionConfirm} 
+          />
         );
 
       case AppState.CALCULATING:
@@ -78,10 +64,10 @@ const MealSnap = () => {
 
       case AppState.RESULTS:
         return (
-          <>
-            <NutritionDisplay foodItems={nutritionResults} onReset={resetApp} />
-            {isMockData && <MockDataAlert />}
-          </>
+          <NutritionDisplay 
+            foodItems={nutritionResults} 
+            onReset={resetApp} 
+          />
         );
 
       default:
