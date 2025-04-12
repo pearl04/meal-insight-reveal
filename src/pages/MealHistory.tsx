@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMealHistory } from '@/hooks/useMealHistory';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/utils';
-import { Key, ArrowLeft } from 'lucide-react';
+import { Key, ArrowLeft, Utensils } from 'lucide-react';
 
 const MealHistoryPage = () => {
   const navigate = useNavigate();
@@ -87,11 +88,11 @@ const MealHistoryPage = () => {
       <div className="flex items-center mb-6">
         <Button 
           variant="ghost" 
-          size="icon" 
           onClick={handleGoBack} 
-          className="mr-4"
+          className="mr-4 flex items-center"
         >
-          <ArrowLeft className="h-6 w-6" />
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Analyze Meals
         </Button>
         <h1 className="text-3xl font-bold">Meal History</h1>
       </div>
