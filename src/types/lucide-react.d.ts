@@ -1,3 +1,4 @@
+
 declare module 'lucide-react' {
   import { FC, SVGProps } from 'react';
   
@@ -30,4 +31,5 @@ declare module 'lucide-react' {
   export const ChevronUp: FC<IconProps>;
   export const PanelLeft: FC<IconProps>;
   export const AlertTriangle: FC<IconProps>;
+  export const MessageCircle: FC<IconProps>;
 } 

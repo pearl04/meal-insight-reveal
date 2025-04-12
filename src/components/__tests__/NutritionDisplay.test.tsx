@@ -10,20 +10,20 @@ describe('NutritionDisplay', () => {
       id: '1',
       name: 'Apple',
       nutrition: {
-        calories: 52,
-        protein: 0.3,
-        carbs: 14,
-        fat: 0.2
+        calories: '52',
+        protein: '0.3',
+        carbs: '14',
+        fat: '0.2'
       }
     },
     {
       id: '2',
       name: 'Chicken Breast',
       nutrition: {
-        calories: 165,
-        protein: 31,
-        carbs: 0,
-        fat: 3.6
+        calories: '165',
+        protein: '31',
+        carbs: '0',
+        fat: '3.6'
       }
     }
   ];

@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload, X, MessageSquare } from "lucide-react";
+import { Camera, Upload, X, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ImageUploaderProps {
@@ -115,7 +115,7 @@ const ImageUploader = ({ onImageSelect, onTextAnalysisClick }: ImageUploaderProp
                   onTextAnalysisClick();
                 }}
               >
-                <MessageSquare className="h-4 w-4 mr-2" /> Add Food to Analyse
+                <MessageCircle className="h-4 w-4 mr-2" /> Add Food to Analyse
               </Button>
             </div>
           </>

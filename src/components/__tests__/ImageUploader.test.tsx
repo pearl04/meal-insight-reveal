@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { render, screen, fireEvent } from '@/utils/test-utils';
 import ImageUploader from '../ImageUploader';
@@ -10,20 +11,21 @@ const expectWithDOM = expect as any;
 
 describe('ImageUploader', () => {
   const mockOnImageSelect = jest.fn();
+  const mockTextAnalysisClick = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   test('renders upload interface correctly', () => {
-    render(<ImageUploader onImageSelect={mockOnImageSelect} />);
+    render(<ImageUploader onImageSelect={mockOnImageSelect} onTextAnalysisClick={mockTextAnalysisClick} />);
     expectWithDOM(screen.getByText(/Upload your meal photo/i)).toBeInTheDocument();
     expectWithDOM(screen.getByText(/Drag and drop/i)).toBeInTheDocument();
     expectWithDOM(screen.getByRole('button', { name: /Select Image/i })).toBeInTheDocument();
   });
 
   test('handles valid image upload via input', async () => {
-    const { container } = render(<ImageUploader onImageSelect={mockOnImageSelect} />);
+    const { container } = render(<ImageUploader onImageSelect={mockOnImageSelect} onTextAnalysisClick={mockTextAnalysisClick} />);
     const file = createMockFile();
     const input = getByAcceptingDroppableFiles(container);
 
@@ -48,7 +50,7 @@ describe('ImageUploader', () => {
 
   test('handles invalid file type', async () => {
     const alertMock = jest.spyOn(window, 'alert').mockImplementation(() => {});
-    const { container } = render(<ImageUploader onImageSelect={mockOnImageSelect} />);
+    const { container } = render(<ImageUploader onImageSelect={mockOnImageSelect} onTextAnalysisClick={mockTextAnalysisClick} />);
     const file = createMockFile('document.pdf', 'application/pdf');
     const input = getByAcceptingDroppableFiles(container);
 
@@ -60,7 +62,7 @@ describe('ImageUploader', () => {
   });
 
   test('handles drag and drop', async () => {
-    render(<ImageUploader onImageSelect={mockOnImageSelect} />);
+    render(<ImageUploader onImageSelect={mockOnImageSelect} onTextAnalysisClick={mockTextAnalysisClick} />);
     const dropZone = screen.getByText(/Drag and drop/).closest('div')!;
     const file = createMockFile();
 
@@ -89,7 +91,7 @@ describe('ImageUploader', () => {
   });
 
   test('allows clearing the selected image', async () => {
-    const { container } = render(<ImageUploader onImageSelect={mockOnImageSelect} />);
+    const { container } = render(<ImageUploader onImageSelect={mockOnImageSelect} onTextAnalysisClick={mockTextAnalysisClick} />);
     const file = createMockFile();
     const input = getByAcceptingDroppableFiles(container);
 

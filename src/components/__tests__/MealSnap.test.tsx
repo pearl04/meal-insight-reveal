@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { render, screen, waitFor } from '@/utils/test-utils';
 import MealSnap from '../MealSnap';
@@ -9,7 +10,9 @@ import { FoodWithNutrition } from '@/types/nutrition';
 // Mock the AI service module
 jest.mock('@/services/aiService', () => ({
   analyzeImage: jest.fn(),
-  getNutritionInfo: jest.fn()
+  getNutritionInfo: jest.fn(),
+  analyzeText: jest.fn(),
+  saveMealLog: jest.fn()
 }));
 
 // Mock the toast hook
@@ -33,20 +36,20 @@ describe('MealSnap', () => {
       id: '1',
       name: 'Apple',
       nutrition: {
-        calories: 52,
-        protein: 0.3,
-        carbs: 14,
-        fat: 0.2
+        calories: '52',
+        protein: '0.3',
+        carbs: '14',
+        fat: '0.2'
       }
     },
     {
       id: '2',
       name: 'Chicken',
       nutrition: {
-        calories: 165,
-        protein: 31,
-        carbs: 0,
-        fat: 3.6
+        calories: '165',
+        protein: '31',
+        carbs: '0',
+        fat: '3.6'
       }
     }
   ];
