@@ -1,8 +1,9 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
+import { MealLogInsert } from "@/types"; // Update path if needed
 
 // === Helpers ===
+
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -35,17 +36,14 @@ const mockAnalyzeImage = async (): Promise<FoodItem[]> => {
 export const analyzeImage = async (imageFile: File, apiKey?: string): Promise<FoodItem[]> => {
   try {
     const base64Image = await fileToBase64(imageFile);
-    
-    // Prepare the request body
+
     const requestBody: { image: string; apiKey?: string } = { image: base64Image };
-    
-    // Add API key to request body if provided
+
     if (apiKey) {
       requestBody.apiKey = apiKey;
       console.log("Using provided API key for analysis");
     }
 
-    // ✅ use Supabase Edge Function
     const { data, error } = await supabase.functions.invoke("get-nutrition", {
       body: requestBody,
     });
@@ -58,7 +56,6 @@ export const analyzeImage = async (imageFile: File, apiKey?: string): Promise<Fo
     const raw = data as string;
     console.log("📦 Supabase Edge Function response:", raw);
 
-    // Clean & extract valid JSON
     const cleaned = raw.replace(/^[^{\[]+/, "").replace(/[\n\r\t\s]*$/, "");
     const contentMatch = cleaned.match(/\[\s*\{.*\}\s*\]/s);
     const jsonStr = contentMatch ? contentMatch[0] : cleaned;
@@ -91,37 +88,40 @@ export const getNutritionInfo = async (foodItems: FoodItem[]): Promise<FoodWithN
 };
 
 export const saveMealLog = async (
-  foodItems: FoodItem[], 
-  nutritionSummary: FoodWithNutrition[], 
+  foodItems: FoodItem[],
+  nutritionSummary: FoodWithNutrition[],
   isMockData: boolean = false
 ) => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData?.user;
+
     if (!user) {
-      console.error("No authenticated user found");
+      console.error("❌ No authenticated user found");
       return null;
     }
 
-    // Fix: Insert as a single object, not as part of an array
     const { data, error } = await supabase
-      .from('meal_logs')
-      .insert({
-        user_id: user.id,
-        food_items: foodItems,
-        nutrition_summary: nutritionSummary,
-        mock_data: isMockData
-      })
+      .from("meal_logs")
+      .insert([
+        {
+          user_id: user.id,
+          food_items: foodItems,
+          nutrition_summary: nutritionSummary,
+          mock_data: isMockData
+        } as MealLogInsert
+      ])
       .select();
 
     if (error) {
-      console.error("Error saving meal log:", error);
+      console.error("❌ Error saving meal log:", error);
       return null;
     }
 
+    console.log("✅ Meal log saved:", data);
     return data;
   } catch (err) {
-    console.error("Unexpected error saving meal log:", err);
+    console.error("❌ Unexpected error saving meal log:", err);
     return null;
   }
 };

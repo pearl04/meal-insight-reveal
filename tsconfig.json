@@ -15,6 +15,6 @@
     "allowJs": true,
     "noUnusedLocals": false,
     "strictNullChecks": false,
-    "types": ["@testing-library/jest-dom"]
+    "types": ["@testing-library/jest-dom", "react", "react-dom"]
   }
 }
