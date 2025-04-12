@@ -74,7 +74,7 @@ export const analyzeText = (text: string): FoodItem[] => {
     }));
 
   if (foodItems.length === 0) {
-    return mockAnalyzeImage();
+    return mockAnalyzeImage() as unknown as FoodItem[];
   }
 
   return foodItems;
