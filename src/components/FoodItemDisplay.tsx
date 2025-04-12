@@ -24,9 +24,9 @@ const FoodItemDisplay = ({ items, onConfirm }: Props) => {
               {item.nutrition && (
                 <ul className="text-sm text-gray-700 mb-2 grid grid-cols-2 gap-x-3">
                   <li>Calories: {item.nutrition.calories}</li>
-                  <li>Protein: {item.nutrition.protein}g</li>
-                  <li>Carbs: {item.nutrition.carbs}g</li>
-                  <li>Fat: {item.nutrition.fat}g</li>
+                  <li>Protein: {item.nutrition.protein}</li>
+                  <li>Carbs: {item.nutrition.carbs}</li>
+                  <li>Fat: {item.nutrition.fat}</li>
                 </ul>
               )}
               {item.healthy_swap && (

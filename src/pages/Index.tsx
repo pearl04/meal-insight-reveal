@@ -25,7 +25,7 @@ const Index = () => {
           
           <div className="mt-16 text-center text-sm text-muted-foreground">
             <p>MealSnap analyzes your food using AI to provide nutrition estimates.</p>
-            <p>Results are approximate and based on average values per 100g of each food item.</p>
+            <p>Nutrition estimates are approximate and based on the entire dish in the image. Use as an indicative guide only.</p>
           </div>
         </div>
       </main>

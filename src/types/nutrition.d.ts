@@ -3,10 +3,10 @@ export interface FoodItem {
   id: string;
   name: string;
   nutrition?: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
+    calories: string;
+    protein: string;
+    carbs: string;
+    fat: string;
   };
   healthy_swap?: string;
   rating?: number;
@@ -14,9 +14,9 @@ export interface FoodItem {
 
 export interface FoodWithNutrition extends FoodItem {
   nutrition: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
+    calories: string;
+    protein: string;
+    carbs: string;
+    fat: string;
   };
 }
