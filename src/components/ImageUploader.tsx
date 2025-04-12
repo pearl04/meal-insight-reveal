@@ -1,14 +1,15 @@
 
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload, X } from "lucide-react";
+import { Camera, Upload, X, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ImageUploaderProps {
   onImageSelect: (file: File) => void;
+  onTextAnalysisClick: () => void;
 }
 
-const ImageUploader = ({ onImageSelect }: ImageUploaderProps) => {
+const ImageUploader = ({ onImageSelect, onTextAnalysisClick }: ImageUploaderProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -103,9 +104,20 @@ const ImageUploader = ({ onImageSelect }: ImageUploaderProps) => {
             <p className="text-sm text-muted-foreground text-center mb-4">
               Drag and drop an image here, or click to select a file
             </p>
-            <Button className="bg-meal-500 hover:bg-meal-600">
-              <Upload className="h-4 w-4 mr-2" /> Select Image
-            </Button>
+            <div className="flex gap-4">
+              <Button className="bg-meal-500 hover:bg-meal-600">
+                <Upload className="h-4 w-4 mr-2" /> Select Image
+              </Button>
+              <Button 
+                className="bg-meal-500 hover:bg-meal-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTextAnalysisClick();
+                }}
+              >
+                <MessageSquare className="h-4 w-4 mr-2" /> Add Food to Analyse
+              </Button>
+            </div>
           </>
         )}
       </div>

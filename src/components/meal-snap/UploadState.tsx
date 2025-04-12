@@ -5,16 +5,21 @@ import ImageUploader from "../ImageUploader";
 
 interface UploadStateProps {
   onImageSelect: (file: File) => void;
+  onTextAnalysisClick: () => void;
   hasErrored: boolean;
 }
 
 const UploadState: React.FC<UploadStateProps> = ({
   onImageSelect,
+  onTextAnalysisClick,
   hasErrored,
 }) => {
   return (
     <>
-      <ImageUploader onImageSelect={onImageSelect} />
+      <ImageUploader 
+        onImageSelect={onImageSelect} 
+        onTextAnalysisClick={onTextAnalysisClick} 
+      />
       {hasErrored && (
         <div className="mt-4 p-3 border border-red-200 rounded-lg bg-red-50 flex items-start gap-2">
           <AlertTriangle size={16} className="text-red-500 mt-1 flex-shrink-0" />

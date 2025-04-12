@@ -7,6 +7,7 @@ import AnalyzingState from "./meal-snap/AnalyzingState";
 import CalculatingState from "./meal-snap/CalculatingState";
 import FoodItemDisplay from "./FoodItemDisplay";
 import NutritionDisplay from "./NutritionDisplay";
+import TextInputModal from "./TextInputModal";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 
 const MealSnap = () => {
@@ -15,7 +16,11 @@ const MealSnap = () => {
     foodItems,
     nutritionResults,
     hasErrored,
+    textInputOpen,
     handleImageSelect,
+    handleTextAnalysis,
+    openTextInput,
+    closeTextInput,
     handleItemsConfirmed,
     resetApp,
   } = useMealSnapState();
@@ -44,6 +49,7 @@ const MealSnap = () => {
         return (
           <UploadState
             onImageSelect={handleImageSelect}
+            onTextAnalysisClick={openTextInput}
             hasErrored={hasErrored}
           />
         );
@@ -75,7 +81,16 @@ const MealSnap = () => {
     }
   };
 
-  return <div className="w-full max-w-md mx-auto">{renderStep()}</div>;
+  return (
+    <div className="w-full max-w-md mx-auto">
+      {renderStep()}
+      <TextInputModal 
+        open={textInputOpen} 
+        onClose={closeTextInput} 
+        onSubmit={handleTextAnalysis} 
+      />
+    </div>
+  );
 };
 
 export default MealSnap;

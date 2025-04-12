@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { MealLogInsert } from "@/types";
@@ -62,6 +63,23 @@ export const analyzeImage = async (imageFile: File, proUser = false): Promise<Fo
   }
 };
 
+export const analyzeText = (text: string): FoodItem[] => {
+  // Parse the comma-separated food items
+  const foodItems = text.split(',')
+    .map(item => item.trim())
+    .filter(item => item.length > 0)
+    .map(item => ({
+      id: `food-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+      name: item,
+    }));
+
+  if (foodItems.length === 0) {
+    return mockAnalyzeImage();
+  }
+
+  return foodItems;
+};
+
 export const getNutritionInfo = async (foodItems: FoodItem[]): Promise<FoodWithNutrition[]> =>
   foodItems.filter((item) => item.nutrition).map((item) => ({ ...item, nutrition: item.nutrition! }));
 
@@ -79,14 +97,14 @@ export const saveMealLog = async (
       return null;
     }
 
-    const { data, error } = await supabase.from("meal_logs").insert([
+    const { data, error } = await supabase.from("meal_logs").insert(
       {
         user_id: user.id,
         food_items: foodItems,
         nutrition_summary: nutritionSummary,
         mock_data: isMockData,
-      } as MealLogInsert,
-    ]).select();
+      } as MealLogInsert
+    ).select();
 
     if (error) {
       console.error("❌ Error saving meal log:", error);

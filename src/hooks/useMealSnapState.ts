@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { FoodItem } from "@/types/nutrition";
-import { analyzeImage, getNutritionInfo } from "@/services/aiService";
+import { analyzeImage, analyzeText, getNutritionInfo } from "@/services/aiService";
 import { useToast } from "@/components/ui/use-toast";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ export const useMealSnapState = () => {
   const [nutritionResults, setNutritionResults] = useState<FoodItem[]>([]);
   const [hasErrored, setHasErrored] = useState<boolean>(false);
   const [isMockData, setIsMockData] = useState<boolean>(false);
+  const [textInputOpen, setTextInputOpen] = useState<boolean>(false);
   const { toast: uiToast } = useToast();
 
   const handleImageSelect = async (file: File) => {
@@ -50,6 +51,41 @@ export const useMealSnapState = () => {
     }
   };
 
+  const handleTextAnalysis = (text: string) => {
+    setAppState(AppState.ANALYZING);
+    setHasErrored(false);
+    setIsMockData(false);
+    
+    try {
+      const items = analyzeText(text);
+      setFoodItems(items);
+      
+      if (items.length > 0) {
+        setAppState(AppState.CONFIRMING_ITEMS);
+      } else {
+        toast.error("No food items were detected in the text");
+        resetApp();
+      }
+    } catch (error) {
+      console.error("Text analysis error:", error);
+      setHasErrored(true);
+      uiToast({
+        variant: "destructive",
+        title: "Analysis failed",
+        description: "We couldn't analyze your text. Please try again.",
+      });
+      setAppState(AppState.UPLOAD);
+    }
+  };
+
+  const openTextInput = () => {
+    setTextInputOpen(true);
+  };
+
+  const closeTextInput = () => {
+    setTextInputOpen(false);
+  };
+
   const handleItemsConfirmed = async (confirmedItems: FoodItem[]) => {
     setAppState(AppState.CALCULATING);
     
@@ -73,6 +109,7 @@ export const useMealSnapState = () => {
     setFoodItems([]);
     setNutritionResults([]);
     setIsMockData(false);
+    setTextInputOpen(false);
     setAppState(AppState.UPLOAD);
   };
 
@@ -83,7 +120,11 @@ export const useMealSnapState = () => {
     nutritionResults,
     hasErrored,
     isMockData,
+    textInputOpen,
     handleImageSelect,
+    handleTextAnalysis,
+    openTextInput,
+    closeTextInput,
     handleItemsConfirmed,
     resetApp,
   };
