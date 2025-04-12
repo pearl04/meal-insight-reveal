@@ -1,5 +1,5 @@
 
-import { analyzeImage, getNutritionInfo } from '../aiService';
+import { analyzeImage, getNutritionInfo } from '../food';
 import { FoodItem } from '@/types/nutrition';
 
 describe('AI Service', () => {
