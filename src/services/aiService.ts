@@ -1,11 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { MealLogInsert } from '@/types';
-
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from "@/integrations/supabase/client";
 
 export const analyzeText = async (text: string): Promise<FoodItem[]> => {
   try {
