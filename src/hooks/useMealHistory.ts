@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { toast } from "sonner";
-import { Json } from "@/integrations/supabase/types";
 
 interface MealLog {
   id: string;
@@ -38,14 +37,16 @@ export const useMealHistory = () => {
         let query = supabase
           .from('meal_logs')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(7); // Limit to latest 7 meals
           
-        // If user is authenticated, filter by their user_id, otherwise get some demo data
+        // If user is authenticated, filter by their user_id, otherwise use demo data
         if (user) {
           query = query.eq('user_id', user.id);
         } else {
-          // For demo purposes, just use the anonymous user data
-          query = query.eq('user_id', 'anonymous');
+          // For demo purposes when no user is logged in
+          // Use a string that's a valid UUID format for demo data
+          query = query.eq('mock_data', true);
         }
           
         // Limit to recent entries (last 7 days)

@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDate } from '@/lib/utils';
 import { ArrowLeft, Utensils } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const MealHistoryPage = () => {
   const navigate = useNavigate();
-  const { mealLogs, isLoading, error, isHistoryLocked } = useMealHistory();
+  const { mealLogs, isLoading, error } = useMealHistory();
 
   const handleGoBack = () => {
     navigate('/');
@@ -35,18 +36,6 @@ const MealHistoryPage = () => {
     return items.map(item => item.name).join(", ");
   };
 
-  const renderLockedView = () => (
-    <div className="text-center p-6 bg-muted/30 rounded-lg">
-      <h2 className="text-2xl font-bold mb-2">Meal Insights Locked</h2>
-      <p className="text-muted-foreground mb-6">
-        Your meal insights history is now part of our Premium Plan.
-      </p>
-      <Button variant="default" className="w-full">
-        Upgrade to Unlock History
-      </Button>
-    </div>
-  );
-
   const renderEmptyState = () => (
     <div className="text-center p-12 bg-muted/30 rounded-lg">
       <Utensils className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -61,22 +50,14 @@ const MealHistoryPage = () => {
   );
 
   const renderMealHistory = () => {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-    // Filter logs to only show the last 7 days
-    const recentLogs = mealLogs.filter(log => 
-      new Date(log.created_at) >= oneWeekAgo
-    );
-
-    if (recentLogs.length === 0) {
+    if (mealLogs.length === 0) {
       return renderEmptyState();
     }
 
     // Group logs by date
     const groupedLogs: { [key: string]: any[] } = {};
     
-    recentLogs.forEach(log => {
+    mealLogs.forEach(log => {
       const date = new Date(log.created_at).toDateString();
       if (!groupedLogs[date]) {
         groupedLogs[date] = [];
@@ -92,26 +73,28 @@ const MealHistoryPage = () => {
               <CardTitle className="text-lg">{formatDate(new Date(date))}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-1/2">Food Items</TableHead>
-                    <TableHead className="w-1/2">Nutrition Summary</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logs.map(log => (
-                    <TableRow key={log.id}>
-                      <TableCell className="align-top">
-                        {renderFoodItems(log.food_items)}
-                      </TableCell>
-                      <TableCell>
-                        {renderNutritionSummary(log.nutrition_summary)}
-                      </TableCell>
+              <ScrollArea className="max-h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-1/2">Food Items</TableHead>
+                      <TableHead className="w-1/2">Nutrition Summary</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.map(log => (
+                      <TableRow key={log.id}>
+                        <TableCell className="align-top">
+                          {renderFoodItems(log.food_items)}
+                        </TableCell>
+                        <TableCell>
+                          {renderNutritionSummary(log.nutrition_summary)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
             </CardContent>
           </Card>
         ))}
@@ -129,23 +112,20 @@ const MealHistoryPage = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex items-center">
+      <div className="flex items-center mb-8">
         <Button 
           variant="ghost" 
           onClick={handleGoBack} 
-          className="mr-auto flex items-center"
+          className="flex items-center"
         >
           <ArrowLeft className="h-5 w-5 mr-2" />
           Analyze Meals
         </Button>
       </div>
       
-      <h1 className="text-4xl font-bold text-center mb-8 mt-4">Meal History</h1>
+      <h1 className="text-4xl font-bold text-center mb-8">Meal History</h1>
       
-      {isHistoryLocked 
-        ? renderLockedView() 
-        : renderMealHistory()
-      }
+      {renderMealHistory()}
     </div>
   );
 };
