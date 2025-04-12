@@ -24,7 +24,6 @@ export const useMealHistory = () => {
   const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isHistoryLocked, setIsHistoryLocked] = useState(false);
 
   useEffect(() => {
     const fetchMealHistory = async () => {
@@ -45,7 +44,6 @@ export const useMealHistory = () => {
           query = query.eq('user_id', user.id);
         } else {
           // For demo purposes when no user is logged in
-          // Use a string that's a valid UUID format for demo data
           query = query.eq('mock_data', true);
         }
           
@@ -93,5 +91,5 @@ export const useMealHistory = () => {
     fetchMealHistory();
   }, []);
 
-  return { mealLogs, isLoading, error, isHistoryLocked };
+  return { mealLogs, isLoading, error };
 };

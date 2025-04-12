@@ -16,12 +16,14 @@ export const analyzeText = async (text: string): Promise<FoodItem[]> => {
     });
 
     if (error) {
+      console.error("Supabase function failed for text analysis:", error);
       throw new Error("Supabase function failed for text analysis");
     }
 
     console.log("📦 Supabase Edge Function text response:", data);
 
     if (!Array.isArray(data)) {
+      console.error("Invalid text AI response format:", data);
       throw new Error("Invalid text AI response format");
     }
 
@@ -54,12 +56,14 @@ export const analyzeImage = async (file: File): Promise<FoodItem[]> => {
     });
 
     if (error) {
+      console.error("Supabase function failed for image analysis:", error);
       throw new Error("Supabase function failed for image analysis");
     }
 
     console.log("📦 Supabase Edge Function image response:", data);
 
     if (!Array.isArray(data)) {
+      console.error("Invalid image AI response format:", data);
       throw new Error("Invalid image AI response format");
     }
 

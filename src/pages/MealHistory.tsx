@@ -17,25 +17,6 @@ const MealHistoryPage = () => {
     navigate('/');
   };
 
-  const renderNutritionSummary = (nutritionSummary: any) => {
-    if (!nutritionSummary || !nutritionSummary.totals) return "No data";
-    
-    const { totals } = nutritionSummary;
-    return (
-      <div className="space-y-1 text-sm">
-        <p>Calories: {totals.calories}</p>
-        <p>Protein: {totals.protein}g</p>
-        <p>Carbs: {totals.carbs}g</p>
-        <p>Fat: {totals.fat}g</p>
-      </div>
-    );
-  };
-
-  const renderFoodItems = (items: any[]) => {
-    if (!items || !items.length) return "No items";
-    return items.map(item => item.name).join(", ");
-  };
-
   const renderEmptyState = () => (
     <div className="text-center p-12 bg-muted/30 rounded-lg">
       <Utensils className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -73,23 +54,27 @@ const MealHistoryPage = () => {
               <CardTitle className="text-lg">{formatDate(new Date(date))}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <ScrollArea className="max-h-[400px]">
+              <ScrollArea className="w-full max-h-[400px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-1/2">Food Items</TableHead>
-                      <TableHead className="w-1/2">Nutrition Summary</TableHead>
+                      <TableHead className="w-1/3">Food Items</TableHead>
+                      <TableHead className="w-1/6">Calories</TableHead>
+                      <TableHead className="w-1/6">Protein</TableHead>
+                      <TableHead className="w-1/6">Carbs</TableHead>
+                      <TableHead className="w-1/6">Fat</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {logs.map(log => (
                       <TableRow key={log.id}>
                         <TableCell className="align-top">
-                          {renderFoodItems(log.food_items)}
+                          {log.food_items.map(item => item.name).join(", ")}
                         </TableCell>
-                        <TableCell>
-                          {renderNutritionSummary(log.nutrition_summary)}
-                        </TableCell>
+                        <TableCell>{log.nutrition_summary.totals.calories}</TableCell>
+                        <TableCell>{log.nutrition_summary.totals.protein}</TableCell>
+                        <TableCell>{log.nutrition_summary.totals.carbs}</TableCell>
+                        <TableCell>{log.nutrition_summary.totals.fat}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -104,15 +89,45 @@ const MealHistoryPage = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 text-center">
-        <div className="animate-pulse text-lg">Loading meal history...</div>
+      <div className="container mx-auto py-8">
+        <div className="flex items-center mb-4">
+          <Button 
+            variant="ghost" 
+            onClick={handleGoBack} 
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Analyze Meals
+          </Button>
+        </div>
+        <h1 className="text-4xl font-bold text-center mb-8">Meal History</h1>
+        <div className="text-center animate-pulse">Loading meal history...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="flex items-center mb-4">
+          <Button 
+            variant="ghost" 
+            onClick={handleGoBack} 
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Analyze Meals
+          </Button>
+        </div>
+        <h1 className="text-4xl font-bold text-center mb-8">Meal History</h1>
+        <div className="text-center text-red-500">Error loading meal history</div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex items-center mb-8">
+      <div className="flex items-center mb-4">
         <Button 
           variant="ghost" 
           onClick={handleGoBack} 

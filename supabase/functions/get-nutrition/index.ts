@@ -1,3 +1,4 @@
+
 // @ts-ignore
 import { serve } from "std/http/server.ts";
 
@@ -12,7 +13,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { image, pro } = await req.json();
+    const { image, text, pro } = await req.json();
     const openRouterKey = Deno.env.get("OPENROUTER_API_KEY") || "";
 
     if (!openRouterKey) {
@@ -31,6 +32,27 @@ serve(async (req: Request) => {
       : "openrouter/optimus-alpha";
 
     console.log("🧠 Using model:", selectedModel);
+
+    // Prepare the message content based on whether we have image or text
+    let messageContent;
+    if (image) {
+      messageContent = [
+        { type: "text", text: "Analyze this meal image and return JSON as instructed." },
+        { type: "image_url", image_url: { url: image } }
+      ];
+    } else if (text) {
+      messageContent = [
+        { type: "text", text: `Analyze these food items and return JSON as instructed: ${text}` }
+      ];
+    } else {
+      return new Response(JSON.stringify({
+        error: "Invalid input",
+        message: "Either image or text must be provided"
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -70,10 +92,7 @@ Do not return anything else. No markdown. No explanation. Just the JSON array an
           },
           {
             role: "user",
-            content: [
-              { type: "text", text: "Analyze this meal image and return JSON as instructed." },
-              { type: "image_url", image_url: { url: image } }
-            ]
+            content: messageContent
           }
         ]
       }),

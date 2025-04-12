@@ -5,12 +5,10 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter,
-  DialogClose 
+  DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { X } from "lucide-react";
 
 interface TextInputModalProps {
   open: boolean;
@@ -25,6 +23,7 @@ const TextInputModal = ({ open, onClose, onSubmit }: TextInputModalProps) => {
     if (text.trim()) {
       onSubmit(text);
       setText("");
+      onClose(); // Close the modal after submission
     }
   };
 
@@ -61,4 +60,3 @@ const TextInputModal = ({ open, onClose, onSubmit }: TextInputModalProps) => {
 };
 
 export default TextInputModal;
-
