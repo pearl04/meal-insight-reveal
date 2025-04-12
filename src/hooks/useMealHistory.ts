@@ -9,7 +9,15 @@ interface MealLog {
   id: string;
   created_at: string;
   food_items: FoodItem[];
-  nutrition_summary: FoodWithNutrition[];
+  nutrition_summary: {
+    items: FoodWithNutrition[];
+    totals: {
+      calories: string;
+      protein: string;
+      carbs: string;
+      fat: string;
+    }
+  };
   mock_data: boolean;
 }
 
@@ -23,37 +31,34 @@ export const useMealHistory = () => {
     const fetchMealHistory = async () => {
       try {
         setIsLoading(true);
+        
+        // First check if user is authenticated
         const { data: { user } } = await supabase.auth.getUser();
         
-        if (!user) {
-          setError("User not authenticated");
-          return;
-        }
-
-        // Check if history is locked (7 days from first use)
-        const { data: firstLog } = await supabase
-          .from('meal_logs')
-          .select('created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: true })
-          .limit(1)
-          .single();
-
-        if (firstLog) {
-          const firstLogDate = new Date(firstLog.created_at);
-          const sevenDaysLater = new Date(firstLogDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-          
-          setIsHistoryLocked(new Date() > sevenDaysLater);
-        }
-
-        const { data, error } = await supabase
+        let query = supabase
           .from('meal_logs')
           .select('*')
-          .eq('user_id', user.id)
           .order('created_at', { ascending: false });
+          
+        // If user is authenticated, filter by their user_id, otherwise get some demo data
+        if (user) {
+          query = query.eq('user_id', user.id);
+        } else {
+          // For demo purposes, just use the anonymous user data
+          query = query.eq('user_id', 'anonymous');
+        }
+          
+        // Limit to recent entries (last 7 days)
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        query = query.gte('created_at', oneWeekAgo.toISOString());
 
-        if (error) {
-          setError(error.message);
+        const { data, error: fetchError } = await query;
+
+        if (fetchError) {
+          console.error("Error fetching meal history:", fetchError);
+          setError(fetchError.message);
+          toast.error("Could not load meal history");
           return;
         }
 
@@ -61,14 +66,22 @@ export const useMealHistory = () => {
         const typedLogs: MealLog[] = data?.map((log: any) => ({
           id: log.id,
           created_at: log.created_at,
-          // Safely type cast JSON data to our specific types
           food_items: log.food_items as FoodItem[],
-          nutrition_summary: log.nutrition_summary as FoodWithNutrition[],
+          nutrition_summary: log.nutrition_summary as {
+            items: FoodWithNutrition[];
+            totals: {
+              calories: string;
+              protein: string;
+              carbs: string;
+              fat: string;
+            }
+          },
           mock_data: log.mock_data
         })) || [];
 
         setMealLogs(typedLogs);
       } catch (err) {
+        console.error("Error in useMealHistory hook:", err);
         setError("Error fetching meal history");
         toast.error("Could not load meal history");
       } finally {
