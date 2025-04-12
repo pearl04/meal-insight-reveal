@@ -5,7 +5,8 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter 
+  DialogFooter,
+  DialogClose 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,9 +34,6 @@ const TextInputModal = ({ open, onClose, onSubmit }: TextInputModalProps) => {
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Enter food items to analyze</span>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6 p-0">
-              <X className="h-4 w-4" />
-            </Button>
           </DialogTitle>
         </DialogHeader>
         
@@ -63,3 +61,4 @@ const TextInputModal = ({ open, onClose, onSubmit }: TextInputModalProps) => {
 };
 
 export default TextInputModal;
+
