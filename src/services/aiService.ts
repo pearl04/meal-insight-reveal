@@ -1,53 +1,21 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
-import { MealLogInsert } from "@/types";
-
-const fileToBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-  });
-
-const mockAnalyzeImage = async (): Promise<FoodItem[]> => {
-  console.log("⚠️ Using mock data for food detection");
-  return [
-    {
-      id: `food-${Date.now()}-1`,
-      name: "Avocado",
-      nutrition: { calories: "160-200", protein: "2-5", carbs: "9-10", fat: "15-20" },
-      healthy_swap: "Use as a spread instead of butter",
-      rating: 9,
-    },
-    {
-      id: `food-${Date.now()}-2`,
-      name: "Tofu",
-      nutrition: { calories: "76-100", protein: "8-10", carbs: "2-5", fat: "5-10" },
-      healthy_swap: "Great protein source",
-      rating: 8,
-    },
-  ];
-};
-
-export const analyzeImage = async (imageFile: File, proUser = false): Promise<FoodItem[]> => {
+export const analyzeText = async (text: string): Promise<FoodItem[]> => {
   try {
-    const base64Image = await fileToBase64(imageFile);
     const { data, error } = await supabase.functions.invoke("get-nutrition", {
       body: JSON.stringify({
-        image: base64Image,
-        pro: proUser
+        text: text,
+        pro: false  // You can adjust this based on user's pro status if needed
       }),
     });
+
     if (error) {
-      throw new Error("Supabase function failed");
+      throw new Error("Supabase function failed for text analysis");
     }
 
-    console.log("📦 Supabase Edge Function response:", data);
+    console.log("📦 Supabase Edge Function text response:", data);
 
     if (!Array.isArray(data)) {
-      throw new Error("Invalid AI response format");
+      throw new Error("Invalid text AI response format");
     }
 
     return data.map((item) => ({
@@ -58,62 +26,7 @@ export const analyzeImage = async (imageFile: File, proUser = false): Promise<Fo
       rating: item.rating,
     }));
   } catch (err) {
-    console.error("❌ analyzeImage failed:", err);
+    console.error("❌ analyzeText failed:", err);
     return mockAnalyzeImage();
-  }
-};
-
-export const analyzeText = (text: string): FoodItem[] => {
-  // Parse the comma-separated food items
-  const foodItems = text.split(',')
-    .map(item => item.trim())
-    .filter(item => item.length > 0)
-    .map(item => ({
-      id: `food-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
-      name: item,
-    }));
-
-  if (foodItems.length === 0) {
-    return mockAnalyzeImage() as unknown as FoodItem[];
-  }
-
-  return foodItems;
-};
-
-export const getNutritionInfo = async (foodItems: FoodItem[]): Promise<FoodWithNutrition[]> =>
-  foodItems.filter((item) => item.nutrition).map((item) => ({ ...item, nutrition: item.nutrition! }));
-
-export const saveMealLog = async (
-  foodItems: FoodItem[],
-  nutritionSummary: FoodWithNutrition[],
-  isMockData = false
-) => {
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData?.user;
-
-    if (!user) {
-      console.error("❌ No authenticated user found");
-      return null;
-    }
-
-    const { data, error } = await supabase.from("meal_logs").insert(
-      {
-        user_id: user.id,
-        food_items: foodItems,
-        nutrition_summary: nutritionSummary,
-        mock_data: isMockData,
-      } as MealLogInsert
-    ).select();
-
-    if (error) {
-      console.error("❌ Error saving meal log:", error);
-      return null;
-    }
-
-    return data;
-  } catch (err) {
-    console.error("❌ Unexpected error saving meal log:", err);
-    return null;
   }
 };
