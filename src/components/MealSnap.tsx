@@ -1,22 +1,22 @@
-import React, { useRef } from "react";
+
+import React, { useRef, useEffect } from "react";
 import { useMealSnapState, AppState } from "@/hooks/useMealSnapState";
 import { saveMealLog } from "@/services/food/logService";
-import UploadState from "./meal-snap/UploadState";
 import AnalyzingState from "./meal-snap/AnalyzingState";
 import CalculatingState from "./meal-snap/CalculatingState";
 import NutritionDisplay from "./NutritionDisplay";
 import TextInputModal from "./TextInputModal";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { toast } from "sonner";
+import { Button } from "./ui/button";
+import { MessageCircle } from "lucide-react";
 
 const MealSnap = () => {
   const {
     appState,
     foodItems,
     nutritionResults,
-    hasErrored,
     textInputOpen,
-    handleImageSelect,
     handleTextAnalysis,
     openTextInput,
     closeTextInput,
@@ -26,6 +26,13 @@ const MealSnap = () => {
 
   // 🔒 Prevent confirm from running multiple times
   const hasConfirmed = useRef(false);
+  
+  // Reset the hasConfirmed ref when app state changes
+  useEffect(() => {
+    if (appState !== AppState.CONFIRMING_ITEMS) {
+      hasConfirmed.current = false;
+    }
+  }, [appState]);
 
   const handleNutritionConfirm = async (foodItems: FoodItem[]) => {
     try {
@@ -52,15 +59,22 @@ const MealSnap = () => {
     switch (appState) {
       case AppState.UPLOAD:
         return (
-          <UploadState
-            onImageSelect={handleImageSelect}
-            onTextAnalysisClick={openTextInput}
-            hasErrored={hasErrored}
-          />
+          <div className="bg-white rounded-xl border p-6 shadow-sm text-center">
+            <h2 className="text-xl font-semibold mb-4">Enter Food Items to Analyze</h2>
+            <p className="text-muted-foreground mb-6">
+              Type in your meal items to get nutrition information and healthy suggestions.
+            </p>
+            <Button 
+              className="bg-meal-500 hover:bg-meal-600 mx-auto"
+              onClick={openTextInput}
+            >
+              <MessageCircle className="h-4 w-4 mr-2" /> Add Food to Analyse
+            </Button>
+          </div>
         );
 
       case AppState.ANALYZING:
-        return <AnalyzingState isTextAnalysis={textInputOpen} />;
+        return <AnalyzingState />;
 
       case AppState.CONFIRMING_ITEMS:
         if (!hasConfirmed.current) {
