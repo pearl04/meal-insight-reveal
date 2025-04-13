@@ -3,18 +3,20 @@ import React from "react";
 import LoadingSpinner from "../LoadingSpinner";
 
 interface AnalyzingStateProps {
-  usingCustomApiKey: boolean;
+  isTextAnalysis?: boolean;
 }
 
-const AnalyzingState: React.FC<AnalyzingStateProps> = ({ usingCustomApiKey }) => {
+const AnalyzingState: React.FC<AnalyzingStateProps> = ({ isTextAnalysis }) => {
   return (
-    <div className="bg-white rounded-xl border p-6 shadow-sm flex flex-col items-center">
-      <LoadingSpinner size="large" className="mb-4" />
-      <h2 className="text-xl font-semibold mb-2">Analyzing your meal...</h2>
-      <p className="text-muted-foreground text-center animate-pulse-opacity">
-        {usingCustomApiKey
-          ? "Using OpenRouter AI to identify food items"
-          : "Our AI is identifying the food items in your image"}
+    <div className="text-center space-y-2">
+      <div className="animate-spin w-6 h-6 border-t-2 border-green-500 rounded-full mx-auto" />
+      <h2 className="text-xl font-semibold mb-2">
+        {isTextAnalysis ? "Analyzing your input..." : "Analyzing your image..."}
+      </h2>
+      <p className="text-sm text-gray-500">
+        {isTextAnalysis
+          ? "Our AI is analyzing the food items you entered."
+          : "Our AI is identifying the food items in your image."}
       </p>
     </div>
   );

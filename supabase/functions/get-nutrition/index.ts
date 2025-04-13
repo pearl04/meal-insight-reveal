@@ -1,4 +1,3 @@
-
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -16,8 +15,9 @@ serve(async (req: Request) => {
     const { image, text, pro } = await req.json();
     const openRouterKey = Deno.env.get("OPENROUTER_API_KEY") || "";
 
+    console.log("🔐 API KEY PRESENT?", !!openRouterKey);
+
     if (!openRouterKey) {
-      console.error("❌ No OpenRouter API key found");
       return new Response(JSON.stringify({
         error: "Missing API key",
         message: "No OpenRouter API key provided in environment"
@@ -27,13 +27,9 @@ serve(async (req: Request) => {
       });
     }
 
-    const selectedModel = pro
-      ? "openai/gpt-4-vision-preview"
-      : "openrouter/optimus-alpha";
-
+    const selectedModel = "openrouter/optimus-alpha";
     console.log("🧠 Using model:", selectedModel);
 
-    // Prepare the message content based on whether we have image or text
     let messageContent;
     if (image) {
       messageContent = [
@@ -59,7 +55,7 @@ serve(async (req: Request) => {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${openRouterKey}`,
-        "HTTP-Referer": "https://mealsnap.app", // must match registered domain
+        "HTTP-Referer": "http://localhost:8080", // Must match registered domain
       },
       body: JSON.stringify({
         model: selectedModel,
@@ -67,7 +63,7 @@ serve(async (req: Request) => {
           {
             role: "system",
             content: `
-You are a nutritionist AI that analyzes food images. 
+You are a nutritionist AI that analyzes food images.
 Only return a pure JSON array like this:
 
 [
@@ -86,9 +82,11 @@ Only return a pure JSON array like this:
 ]
 
 ✅ Add units: "kcal" for calories and "g" for macros.
-✅ Add a brief assumptions section after the array.
-For example: "Exact values depend on portion size, cheese quantity, sauce ingredients, and drink type."
-Do not return anything else. No markdown. No explanation. Just the JSON array and a string line below it.`.trim(),
+✅ Add a short assumptions section after the array like:
+"Exact values depend on portion size, cheese quantity, sauce ingredients, and drink type."
+
+Don't include any extra explanation, markdown, or intro.
+`.trim()
           },
           {
             role: "user",
@@ -100,10 +98,18 @@ Do not return anything else. No markdown. No explanation. Just the JSON array an
 
     if (!openRouterRes.ok) {
       const errorText = await openRouterRes.text();
-      console.error("❌ OpenRouter API error:", errorText);
+      let errorJson;
+      try {
+        errorJson = JSON.parse(errorText);
+      } catch {
+        errorJson = errorText;
+      }
+
+      console.error("❌ OpenRouter API error:", errorJson);
+
       return new Response(JSON.stringify({
         error: "OpenRouter API error",
-        message: errorText,
+        message: errorJson,
       }), {
         status: openRouterRes.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

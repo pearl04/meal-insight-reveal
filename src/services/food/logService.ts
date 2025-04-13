@@ -4,6 +4,7 @@ import { MealLogInsert } from '@/types';
 import { supabase } from "@/integrations/supabase/client";
 import { calculateTotals } from "./utils";
 import { toast } from "sonner";
+import { getAnonUserId } from "@/lib/getAnonUserId";
 
 /**
  * Saves a meal log to the database
@@ -18,7 +19,7 @@ export const saveMealLog = async (
     
     // Prepare data for saving to database
     const mealLogData: MealLogInsert = {
-      user_id: user?.id || 'anonymous', // Use user ID when available, otherwise use anonymous for demo
+      user_id: user?.id || getAnonUserId(), // Use user ID when available, otherwise use anonymous for demo
       food_items: foodItems,
       nutrition_summary: {
         items: itemsWithNutrition,

@@ -1,11 +1,9 @@
-
-import React from "react";
+import React, { useRef } from "react";
 import { useMealSnapState, AppState } from "@/hooks/useMealSnapState";
 import { saveMealLog } from "@/services/food/logService";
 import UploadState from "./meal-snap/UploadState";
 import AnalyzingState from "./meal-snap/AnalyzingState";
 import CalculatingState from "./meal-snap/CalculatingState";
-import FoodItemDisplay from "./FoodItemDisplay";
 import NutritionDisplay from "./NutritionDisplay";
 import TextInputModal from "./TextInputModal";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
@@ -26,25 +24,26 @@ const MealSnap = () => {
     resetApp,
   } = useMealSnapState();
 
+  // 🔒 Prevent confirm from running multiple times
+  const hasConfirmed = useRef(false);
+
   const handleNutritionConfirm = async (foodItems: FoodItem[]) => {
     try {
-      // Get the nutrition data by confirming items
       await handleItemsConfirmed(foodItems);
-      
-      // Wait for nutrition results to be calculated
+
+      // Small delay to ensure nutritionResults is updated
       setTimeout(async () => {
-        // Make sure we're only sending items that have complete nutrition information
         const itemsWithNutrition = nutritionResults.filter(
           (item): item is FoodWithNutrition => !!item.nutrition
         );
-        
+
         if (itemsWithNutrition.length > 0) {
           await saveMealLog(foodItems, itemsWithNutrition);
           toast.success("Meal logged successfully");
         }
-      }, 500); // Small delay to ensure nutritionResults is updated
+      }, 500);
     } catch (error) {
-      console.error("Error saving meal log:", error);
+      console.error("❌ Error saving meal log:", error);
       toast.error("Failed to save meal log");
     }
   };
@@ -61,24 +60,23 @@ const MealSnap = () => {
         );
 
       case AppState.ANALYZING:
-        return <AnalyzingState usingCustomApiKey={false} />;
+        return <AnalyzingState isTextAnalysis={textInputOpen} />;
 
       case AppState.CONFIRMING_ITEMS:
-        return (
-          <FoodItemDisplay 
-            items={foodItems} 
-            onConfirm={handleNutritionConfirm} 
-          />
-        );
+        if (!hasConfirmed.current) {
+          hasConfirmed.current = true;
+          handleNutritionConfirm(foodItems);
+        }
+        return <CalculatingState />;
 
       case AppState.CALCULATING:
         return <CalculatingState />;
 
       case AppState.RESULTS:
         return (
-          <NutritionDisplay 
-            foodItems={nutritionResults} 
-            onReset={resetApp} 
+          <NutritionDisplay
+            foodItems={nutritionResults}
+            onReset={resetApp}
           />
         );
 
@@ -90,10 +88,10 @@ const MealSnap = () => {
   return (
     <div className="w-full max-w-md mx-auto">
       {renderStep()}
-      <TextInputModal 
-        open={textInputOpen} 
-        onClose={closeTextInput} 
-        onSubmit={handleTextAnalysis} 
+      <TextInputModal
+        open={textInputOpen}
+        onClose={closeTextInput}
+        onSubmit={handleTextAnalysis}
       />
     </div>
   );
