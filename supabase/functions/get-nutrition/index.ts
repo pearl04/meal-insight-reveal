@@ -28,7 +28,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const selectedModel = "openrouter/optimus-alpha";
+    const selectedModel = "google/gemini-2.5-pro-exp-03-25:free";
     console.log("🧠 Using model:", selectedModel);
 
     if (!text) {
@@ -55,7 +55,7 @@ serve(async (req: Request) => {
             role: "system",
             content: `
 You are a nutritionist AI that analyzes food items.
-Only return a pure JSON array like this:
+Return ONLY a JSON array like:
 
 [
   {
@@ -72,12 +72,12 @@ Only return a pure JSON array like this:
   }
 ]
 
-✅ Add units: "kcal" for calories and "g" for macros.
-✅ Add a short assumptions section after the array like:
-"Exact values depend on portion size, cheese quantity, sauce ingredients, and drink type."
+- Include units: "kcal" for calories, "g" for macros.
+- Add ONE assumptions line after JSON like:
+"Exact values depend on portion size, cheese, and ingredients."
 
-Don't include any extra explanation, markdown, or intro.
-`.trim()
+Do NOT include explanations, intro, markdown, or formatting.`.trim()
+
           },
           {
             role: "user",
@@ -111,6 +111,8 @@ Don't include any extra explanation, markdown, or intro.
     console.log("📦 Raw OpenRouter response:", JSON.stringify(data, null, 2));
 
     const rawContent = data.choices?.[0]?.message?.content?.trim();
+    console.log("🧪 rawContent from Gemini:", rawContent);
+
 
     const match = rawContent?.match(/\[\s*\{[\s\S]*\}\s*\]/);
     if (!match) {

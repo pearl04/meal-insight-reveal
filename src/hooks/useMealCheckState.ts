@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { analyzeText } from "@/services/food/analyzeService";
@@ -13,11 +12,10 @@ export enum AppState {
   RESULTS
 }
 
-export const useMealSnapState = () => {
+export const useMealCheckState = () => {
   const [appState, setAppState] = useState<AppState>(AppState.UPLOAD);
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [nutritionResults, setNutritionResults] = useState<FoodWithNutrition[]>([]);
-  const [textInputOpen, setTextInputOpen] = useState(false);
 
   const handleTextAnalysis = async (text: string) => {
     setAppState(AppState.ANALYZING);
@@ -58,14 +56,6 @@ export const useMealSnapState = () => {
     }
   };
 
-  const openTextInput = () => {
-    setTextInputOpen(true);
-  };
-
-  const closeTextInput = () => {
-    setTextInputOpen(false);
-  };
-
   const resetApp = () => {
     setAppState(AppState.UPLOAD);
     setFoodItems([]);
@@ -76,11 +66,8 @@ export const useMealSnapState = () => {
     appState,
     foodItems,
     nutritionResults,
-    textInputOpen,
     handleTextAnalysis,
     handleItemsConfirmed,
-    openTextInput,
-    closeTextInput,
     resetApp,
   };
 };

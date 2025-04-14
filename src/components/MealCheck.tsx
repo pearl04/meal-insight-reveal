@@ -1,33 +1,27 @@
-
-import React, { useRef, useEffect } from "react";
-import { useMealSnapState, AppState } from "@/hooks/useMealSnapState";
+import React, { useRef, useEffect, useState } from "react";
+import { useMealCheckState, AppState } from "../hooks/useMealCheckState";
 import { saveMealLog } from "@/services/food/logService";
-import AnalyzingState from "./meal-snap/AnalyzingState";
-import CalculatingState from "./meal-snap/CalculatingState";
+import AnalyzingState from "./meal-check/AnalyzingState";
+import CalculatingState from "./meal-check/CalculatingState";
 import NutritionDisplay from "./NutritionDisplay";
-import TextInputModal from "./TextInputModal";
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { MessageCircle } from "lucide-react";
 
-const MealSnap = () => {
+const MealCheck = () => {
   const {
     appState,
     foodItems,
     nutritionResults,
-    textInputOpen,
     handleTextAnalysis,
-    openTextInput,
-    closeTextInput,
     handleItemsConfirmed,
     resetApp,
-  } = useMealSnapState();
+  } = useMealCheckState();
 
-  // 🔒 Prevent confirm from running multiple times
+  const [inputText, setInputText] = useState("");
   const hasConfirmed = useRef(false);
-  
-  // Reset the hasConfirmed ref when app state changes
+
   useEffect(() => {
     if (appState !== AppState.CONFIRMING_ITEMS) {
       hasConfirmed.current = false;
@@ -37,13 +31,10 @@ const MealSnap = () => {
   const handleNutritionConfirm = async (foodItems: FoodItem[]) => {
     try {
       await handleItemsConfirmed(foodItems);
-
-      // Small delay to ensure nutritionResults is updated
       setTimeout(async () => {
         const itemsWithNutrition = nutritionResults.filter(
           (item): item is FoodWithNutrition => !!item.nutrition
         );
-
         if (itemsWithNutrition.length > 0) {
           await saveMealLog(foodItems, itemsWithNutrition);
           toast.success("Meal logged successfully");
@@ -64,11 +55,18 @@ const MealSnap = () => {
             <p className="text-muted-foreground mb-6">
               Type in your meal items to get nutrition information and healthy suggestions.
             </p>
-            <Button 
-              className="bg-meal-500 hover:bg-meal-600 mx-auto"
-              onClick={openTextInput}
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="e.g., apple, grilled chicken, brown rice"
+              className="w-full p-4 border border-green-400 rounded-md mb-4"
+              rows={4}
+            />
+            <Button
+              className="bg-meal-500 hover:bg-meal-600"
+              onClick={() => handleTextAnalysis(inputText)}
             >
-              <MessageCircle className="h-4 w-4 mr-2" /> Add Food to Analyse
+              <MessageCircle className="h-4 w-4 mr-2" /> Analyze Food Items
             </Button>
           </div>
         );
@@ -87,28 +85,14 @@ const MealSnap = () => {
         return <CalculatingState />;
 
       case AppState.RESULTS:
-        return (
-          <NutritionDisplay
-            foodItems={nutritionResults}
-            onReset={resetApp}
-          />
-        );
+        return <NutritionDisplay foodItems={nutritionResults} onReset={resetApp} />;
 
       default:
         return null;
     }
   };
 
-  return (
-    <div className="w-full max-w-md mx-auto">
-      {renderStep()}
-      <TextInputModal
-        open={textInputOpen}
-        onClose={closeTextInput}
-        onSubmit={handleTextAnalysis}
-      />
-    </div>
-  );
+  return <div className="w-full max-w-md mx-auto">{renderStep()}</div>;
 };
 
-export default MealSnap;
+export default MealCheck;
