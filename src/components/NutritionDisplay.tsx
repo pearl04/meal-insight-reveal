@@ -24,10 +24,10 @@ const NutritionDisplay = ({ foodItems, onReset }: NutritionDisplayProps) => {
 
             {item.nutrition ? (
               <div className="text-sm text-muted-foreground grid grid-cols-2 gap-3">
-                <div>Calories: {item.nutrition.calories} kcal</div>
-                <div>Protein: {item.nutrition.protein} g</div>
-                <div>Carbs: {item.nutrition.carbs} g</div>
-                <div>Fat: {item.nutrition.fat} g</div>
+                <div>Calories: {item.nutrition.calories}</div>
+                <div>Protein: {item.nutrition.protein}</div>
+                <div>Carbs: {item.nutrition.carbs}</div>
+                <div>Fat: {item.nutrition.fat}</div>
               </div>
             ) : (
               <div className="text-sm text-muted-foreground">No nutrition data found</div>
