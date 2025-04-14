@@ -71,8 +71,6 @@ Return ONLY a JSON array like:
     "rating": 6
   }
 ]
-
-- Include units: "kcal" for calories, "g" for macros.
 - Add ONE assumptions line after JSON like:
 "Exact values depend on portion size, cheese, and ingredients."
 
