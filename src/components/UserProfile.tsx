@@ -11,36 +11,87 @@ const UserProfile = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.email);
+        console.log("Auth state changed:", event, session?.user?.id);
+        console.log("User metadata:", session?.user?.user_metadata);
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        if (event === 'SIGNED_IN') {
+          toast.success('Signed in successfully!');
+        }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session?.user?.email);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log("Initial session check:", session?.user?.id);
+      if (error) {
+        console.error("Session error:", error);
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Check URL for errors after login redirect
+      const url = new URL(window.location.href);
+      const errorParam = url.searchParams.get('error');
+      const errorDescription = url.searchParams.get('error_description');
+      
+      if (errorParam) {
+        console.error("Auth error in URL:", errorParam, errorDescription);
+        toast.error(`Authentication error: ${errorDescription || errorParam}`);
+        // Clear the error params from URL
+        url.searchParams.delete('error');
+        url.searchParams.delete('error_description');
+        window.history.replaceState({}, document.title, url.toString());
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success('Logged out successfully');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error(`Logout failed: ${error.message}`);
+        console.error("Logout error:", error);
+        return;
+      }
+      toast.success('Logged out successfully');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Logout failed: ${errorMessage}`);
+      console.error("Logout error:", error);
+    }
   };
 
   // Show loading state
   if (loading) return <div className="animate-pulse rounded-full h-8 w-8 bg-muted"></div>;
+  
+  // Show error state
+  if (error) {
+    console.error("Auth error state:", error);
+    return (
+      <div className="text-red-500">
+        <Button variant="ghost" size="sm" onClick={() => setError(null)}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
   
   // If not logged in, don't render anything
   if (!user) return null;

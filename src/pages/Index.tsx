@@ -6,23 +6,35 @@ import { Leaf, Apple, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   const handleGoogleLogin = async () => {
     try {
+      // Get current URL for better redirect handling
+      const redirectTo = window.location.origin;
+      console.log("Redirecting to:", redirectTo);
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         },
       });
       
       if (error) {
-        toast.error("Failed to login with Google");
+        toast.error(`Login failed: ${error.message}`);
         console.error("Login error:", error);
       }
     } catch (error) {
-      toast.error("Failed to login with Google");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Login failed: ${errorMessage}`);
       console.error("Login error:", error);
     }
   };
