@@ -1,7 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Utensils } from "lucide-react";
+import UserProfile from "./UserProfile";
 
 const Header = () => {
   return (
@@ -10,6 +9,7 @@ const Header = () => {
         <Link to="/" className="text-xl font-bold">
           MealCheck
         </Link>
+        <UserProfile />
       </div>
     </header>
   );
