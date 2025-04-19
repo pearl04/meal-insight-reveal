@@ -12,16 +12,20 @@ const Header = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Header session check:", !!session);
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    });
-
-    // Listen for auth changes
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Header auth state changed:", event, !!session);
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+      
+      if (event === 'SIGNED_IN') {
+        toast.success('Signed in successfully!');
+      }
+    });
+
+    // THEN check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Header session check:", !!session);
       setIsAuthenticated(!!session);
       setIsLoading(false);
     });
@@ -31,16 +35,14 @@ const Header = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      // Fix for the redirect URI - use only hostname without port for Google Auth
       const currentURL = new URL(window.location.href);
-      // Use only hostname without port for production, or include port for localhost
       const redirectTo = currentURL.hostname === 'localhost' 
         ? `${currentURL.protocol}//${currentURL.hostname}:${currentURL.port}`
         : `${currentURL.protocol}//${currentURL.hostname}`;
       
       console.log("Header login redirecting to:", redirectTo);
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
@@ -54,11 +56,7 @@ const Header = () => {
       if (error) {
         toast.error(`Login error: ${error.message}`);
         console.error("Header login error:", error);
-        return;
       }
-      
-      console.log("Auth redirect data:", data);
-      
     } catch (error) {
       console.error("Header login error:", error);
       toast.error(`Login failed: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -76,22 +74,11 @@ const Header = () => {
           <div className="animate-pulse rounded-full h-8 w-8 bg-muted"></div>
         ) : isAuthenticated ? (
           <UserProfile />
-        ) : (
-          // Only show the login button on pages that aren't the homepage
-          window.location.pathname !== '/' && (
-            <Button 
-              onClick={handleGoogleLogin}
-              variant="outline"
-              size="sm"
-            >
-              <LogIn className="mr-2 h-4 w-4" />
-              Sign In
-            </Button>
-          )
-        )}
+        ) : null}
       </div>
     </header>
   );
 };
 
 export default Header;
+
