@@ -2,51 +2,11 @@
 import React from "react";
 import Header from "@/components/Header";
 import MealCheck from "../components/MealCheck";
-import { Leaf, Apple, LogIn } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Leaf, Apple } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
-
-  const handleGoogleLogin = async () => {
-    try {
-      // Fix for the redirect URI - use only hostname without port for Google Auth
-      const currentURL = new URL(window.location.href);
-      // Use only hostname without port for production, or include port for localhost
-      const redirectTo = currentURL.hostname === 'localhost' 
-        ? `${currentURL.protocol}//${currentURL.hostname}:${currentURL.port}`
-        : `${currentURL.protocol}//${currentURL.hostname}`;
-        
-      console.log("Index login redirecting to:", redirectTo);
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
-        },
-      });
-      
-      if (error) {
-        toast.error(`Login failed: ${error.message}`);
-        console.error("Login error:", error);
-        return;
-      }
-      
-      console.log("Auth redirect data:", data);
-      
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      toast.error(`Login failed: ${errorMessage}`);
-      console.error("Login error:", error);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -63,13 +23,7 @@ const Index = () => {
             <p className="text-xl text-muted-foreground">
               Type your meals and get instant nutrition insights powered by AI
             </p>
-            <Button 
-              onClick={handleGoogleLogin}
-              className="mt-6 bg-meal-500 hover:bg-meal-600"
-            >
-              <LogIn className="mr-2 h-4 w-4" />
-              Log My Meals with Google
-            </Button>
+            {/* Removed duplicate login button from here since it's now in the header */}
           </div>
 
           <MealCheck />

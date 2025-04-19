@@ -74,11 +74,19 @@ const Header = () => {
           <div className="animate-pulse rounded-full h-8 w-8 bg-muted"></div>
         ) : isAuthenticated ? (
           <UserProfile />
-        ) : null}
+        ) : (
+          <Button 
+            onClick={handleGoogleLogin}
+            variant="outline"
+            size="sm"
+          >
+            <LogIn className="mr-2 h-4 w-4" />
+            Sign In
+          </Button>
+        )}
       </div>
     </header>
   );
 };
 
 export default Header;
-
