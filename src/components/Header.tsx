@@ -35,17 +35,10 @@ const Header = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      const currentURL = new URL(window.location.href);
-      const redirectTo = currentURL.hostname === 'localhost' 
-        ? `${currentURL.protocol}//${currentURL.hostname}:${currentURL.port}`
-        : `${currentURL.protocol}//${currentURL.hostname}`;
-      
-      console.log("Header login redirecting to:", redirectTo);
-      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo,
+          redirectTo: window.location.origin,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
