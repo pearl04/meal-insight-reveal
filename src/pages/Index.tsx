@@ -1,9 +1,32 @@
+
 import React from "react";
 import Header from "@/components/Header";
 import MealCheck from "../components/MealCheck";
-import { Leaf, Apple } from "lucide-react";
+import { Leaf, Apple, LogIn } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Index = () => {
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      
+      if (error) {
+        toast.error("Failed to login with Google");
+        console.error("Login error:", error);
+      }
+    } catch (error) {
+      toast.error("Failed to login with Google");
+      console.error("Login error:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -19,6 +42,13 @@ const Index = () => {
             <p className="text-xl text-muted-foreground">
               Type your meals and get instant nutrition insights powered by AI
             </p>
+            <Button 
+              onClick={handleGoogleLogin}
+              className="mt-6 bg-meal-500 hover:bg-meal-600"
+            >
+              <LogIn className="mr-2 h-4 w-4" />
+              Log My Meals with Google
+            </Button>
           </div>
 
           <MealCheck />
