@@ -32,4 +32,5 @@ declare module 'lucide-react' {
   export const PanelLeft: FC<IconProps>;
   export const AlertTriangle: FC<IconProps>;
   export const MessageCircle: FC<IconProps>;
+  export const LogIn: FC<IconProps>; // Added this line
 } 
