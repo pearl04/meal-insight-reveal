@@ -31,9 +31,13 @@ const Header = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      // Get the current URL and port for proper redirects
+      // Fix for the redirect URI - use only hostname without port for Google Auth
       const currentURL = new URL(window.location.href);
-      const redirectTo = `${currentURL.protocol}//${currentURL.hostname}:${currentURL.port}`;
+      // Use only hostname without port for production, or include port for localhost
+      const redirectTo = currentURL.hostname === 'localhost' 
+        ? `${currentURL.protocol}//${currentURL.hostname}:${currentURL.port}`
+        : `${currentURL.protocol}//${currentURL.hostname}`;
+      
       console.log("Header login redirecting to:", redirectTo);
       
       const { data, error } = await supabase.auth.signInWithOAuth({

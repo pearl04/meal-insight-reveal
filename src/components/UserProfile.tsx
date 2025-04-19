@@ -43,22 +43,34 @@ const UserProfile = () => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      
-      // Check URL for errors after login redirect
+    });
+
+    // Check URL for errors after login redirect
+    const checkUrlForErrors = () => {
       const url = new URL(window.location.href);
       const errorParam = url.searchParams.get('error');
       const errorDescription = url.searchParams.get('error_description');
       
       if (errorParam) {
         console.error("Auth error in URL:", errorParam, errorDescription);
-        toast.error(`Authentication error: ${errorDescription || errorParam}`);
-        setError(`${errorDescription || errorParam}`);
+        
+        // Handle database error specifically
+        if (errorDescription && errorDescription.includes('Database error')) {
+          toast.error(`Database error during authentication. Please contact support.`);
+          setError(`Database error: This is likely a configuration issue with the Supabase database. Please check permissions and RLS settings.`);
+        } else {
+          toast.error(`Authentication error: ${errorDescription || errorParam}`);
+          setError(`${errorDescription || errorParam}`);
+        }
+        
         // Clear the error params from URL
         url.searchParams.delete('error');
         url.searchParams.delete('error_description');
         window.history.replaceState({}, document.title, url.toString());
       }
-    });
+    };
+    
+    checkUrlForErrors();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -86,9 +98,9 @@ const UserProfile = () => {
   if (error) {
     console.error("Auth error state:", error);
     return (
-      <div className="text-red-500 text-xs">
+      <div className="text-red-500 text-xs max-w-[300px]">
         <div>Error: {error}</div>
-        <Button variant="ghost" size="sm" onClick={() => setError(null)}>
+        <Button variant="ghost" size="sm" onClick={() => setError(null)} className="mt-2">
           Retry
         </Button>
       </div>
