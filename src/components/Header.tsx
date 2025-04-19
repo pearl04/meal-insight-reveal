@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
+import { toast } from "sonner";
 
 const Header = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,10 +31,12 @@ const Header = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      const redirectTo = window.location.origin;
+      // Get the current URL and port for proper redirects
+      const currentURL = new URL(window.location.href);
+      const redirectTo = `${currentURL.protocol}//${currentURL.hostname}:${currentURL.port}`;
       console.log("Header login redirecting to:", redirectTo);
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
@@ -44,9 +47,17 @@ const Header = () => {
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        toast.error(`Login error: ${error.message}`);
+        console.error("Header login error:", error);
+        return;
+      }
+      
+      console.log("Auth redirect data:", data);
+      
     } catch (error) {
       console.error("Header login error:", error);
+      toast.error(`Login failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
 

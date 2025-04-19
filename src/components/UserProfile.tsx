@@ -52,6 +52,7 @@ const UserProfile = () => {
       if (errorParam) {
         console.error("Auth error in URL:", errorParam, errorDescription);
         toast.error(`Authentication error: ${errorDescription || errorParam}`);
+        setError(`${errorDescription || errorParam}`);
         // Clear the error params from URL
         url.searchParams.delete('error');
         url.searchParams.delete('error_description');
@@ -81,11 +82,12 @@ const UserProfile = () => {
   // Show loading state
   if (loading) return <div className="animate-pulse rounded-full h-8 w-8 bg-muted"></div>;
   
-  // Show error state
+  // Show error state with more details
   if (error) {
     console.error("Auth error state:", error);
     return (
-      <div className="text-red-500">
+      <div className="text-red-500 text-xs">
+        <div>Error: {error}</div>
         <Button variant="ghost" size="sm" onClick={() => setError(null)}>
           Retry
         </Button>

@@ -13,11 +13,12 @@ const Index = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      // Get current URL for better redirect handling
-      const redirectTo = window.location.origin;
-      console.log("Redirecting to:", redirectTo);
+      // Get the current URL and port for proper redirects
+      const currentURL = new URL(window.location.href);
+      const redirectTo = `${currentURL.protocol}//${currentURL.hostname}:${currentURL.port}`;
+      console.log("Index login redirecting to:", redirectTo);
 
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
@@ -31,7 +32,11 @@ const Index = () => {
       if (error) {
         toast.error(`Login failed: ${error.message}`);
         console.error("Login error:", error);
+        return;
       }
+      
+      console.log("Auth redirect data:", data);
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       toast.error(`Login failed: ${errorMessage}`);
