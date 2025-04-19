@@ -77,14 +77,17 @@ const Header = () => {
         ) : isAuthenticated ? (
           <UserProfile />
         ) : (
-          <Button 
-            onClick={handleGoogleLogin}
-            variant="outline"
-            size="sm"
-          >
-            <LogIn className="mr-2 h-4 w-4" />
-            Sign In
-          </Button>
+          // Only show the login button on pages that aren't the homepage
+          window.location.pathname !== '/' && (
+            <Button 
+              onClick={handleGoogleLogin}
+              variant="outline"
+              size="sm"
+            >
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign In
+            </Button>
+          )
         )}
       </div>
     </header>
