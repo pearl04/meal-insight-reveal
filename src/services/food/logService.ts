@@ -18,15 +18,19 @@ export const saveMealLog = async (
     // Important: Debug logs for meal logging flow
     console.log("💾 saveMealLog CALLED with userId:", userId);
 
-    // For anonymous users, get the anon ID with prefix
     let effectiveUserId = userId;
     let isMockData = false;
     
     if (!effectiveUserId) {
-      effectiveUserId = getAnonUserId(); // Now returns with prefix
+      // Only use anon_ prefix for anonymous users
+      effectiveUserId = getAnonUserId();
       isMockData = true; // Flag as mock data for anonymous users
       console.log("Using anonymous ID for meal log:", effectiveUserId);
     } else {
+      // Authenticated users should NEVER have anon_ prefix!
+      if (effectiveUserId.startsWith('anon_')) {
+        effectiveUserId = effectiveUserId.replace(/^anon_/, '');
+      }
       console.log("Using authenticated user ID for meal log:", effectiveUserId);
     }
     

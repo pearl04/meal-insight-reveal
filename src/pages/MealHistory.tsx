@@ -82,11 +82,12 @@ export default function MealHistory() {
         
         // Perform a direct database search with the exact user ID for authenticated user
         if (user?.id) {
+          // --- FIX: always query with RAW auth user ID, never prefixed! ---
           console.log("Fetching meal logs for authenticated user:", user.id);
           const { data: authLogs, error } = await supabase
             .from("meal_logs")
             .select("*")
-            .eq("user_id", user.id)
+            .eq("user_id", user.id) // never prefix
             .order("created_at", { ascending: false });
           
           if (error) {
