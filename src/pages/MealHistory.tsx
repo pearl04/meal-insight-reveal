@@ -22,20 +22,36 @@ interface MealLog {
 
 export default function MealHistory() {
   const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchMealLogs() {
+      setIsLoading(true);
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        console.error("No user found");
+      
+      let userId = user?.id;
+      
+      // If not logged in, use local storage ID
+      if (!userId) {
+        const localId = localStorage.getItem('anonymousId');
+        if (localId) {
+          userId = localId;
+          console.log("Using anonymous ID from localStorage:", localId);
+        }
+      }
+
+      if (!userId) {
+        console.log("No user ID found, showing empty meal history");
+        setIsLoading(false);
         return;
       }
 
       const { data, error } = await supabase
         .from("meal_logs")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(7);
 
@@ -45,6 +61,8 @@ export default function MealHistory() {
         // Cast the data to MealLog[] to ensure TypeScript is happy
         setMealLogs(data as MealLog[] || []);
       }
+      
+      setIsLoading(false);
     }
 
     fetchMealLogs();
@@ -93,7 +111,13 @@ export default function MealHistory() {
             </tr>
           </thead>
           <tbody>
-            {mealLogs.length === 0 ? (
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="text-center p-8">
+                  Loading your meal history...
+                </td>
+              </tr>
+            ) : mealLogs.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center p-8 text-muted-foreground">
                   No meal history yet. Start logging meals!
@@ -103,9 +127,11 @@ export default function MealHistory() {
               mealLogs.map((log) => {
                 // Handle food_items as it might be a Json type now
                 const mealName = Array.isArray(log.food_items) && log.food_items.length > 0 
-                  ? log.food_items[0] 
+                  ? log.food_items[0].name || log.food_items[0] 
                   : typeof log.food_items === 'object' && log.food_items !== null 
-                    ? JSON.stringify(log.food_items).slice(0, 30) + '...'
+                    ? Array.isArray(log.food_items) 
+                      ? log.food_items.map((item: any) => item.name || item).join(', ')
+                      : JSON.stringify(log.food_items).slice(0, 30) + '...'
                     : typeof log.food_items === 'string'
                       ? log.food_items
                       : "N/A";

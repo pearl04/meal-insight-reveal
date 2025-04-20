@@ -1,3 +1,4 @@
+
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { MealLogInsert } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,20 +12,39 @@ import { getAnonUserId } from "@/lib/getAnonUserId";
 export const saveMealLog = async (
   foodItems: FoodItem[],
   itemsWithNutrition: FoodWithNutrition[],
-  userId: string
+  userId?: string
 ): Promise<void> => {
   try {
     console.log("👉 saveMealLog CALLED with userId:", userId);
 
-    const uuid = userId || getAnonUserId(); // fallback if needed
+    const uuid = userId || getAnonUserId(); // fallback if no user ID provided
+    
+    // Format the food items to ensure they're properly saved
+    const formattedFoodItems = foodItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      ...(item.nutrition && { nutrition: item.nutrition }),
+      ...(item.healthy_swap && { healthy_swap: item.healthy_swap }),
+      ...(item.rating && { rating: item.rating })
+    }));
+
+    // Format the nutrition summary to ensure it's properly saved
+    const formattedNutritionSummary = {
+      items: itemsWithNutrition.map(item => ({
+        id: item.id,
+        name: item.name,
+        nutrition: item.nutrition,
+        healthy_swap: item.healthy_swap || null,
+        rating: item.rating || null,
+        feedback: item.nutrition ? `${item.name} contains approximately ${item.nutrition.calories} calories` : null
+      })),
+      totals: calculateTotals(itemsWithNutrition),
+    };
 
     const mealLogData: MealLogInsert = {
       user_id: uuid,
-      food_items: foodItems,
-      nutrition_summary: {
-        items: itemsWithNutrition,
-        totals: calculateTotals(itemsWithNutrition),
-      },
+      food_items: formattedFoodItems,
+      nutrition_summary: formattedNutritionSummary,
       mock_data: !userId, // true if no userId (anonymous user)
     };
 
@@ -42,28 +62,7 @@ export const saveMealLog = async (
     toast.success("Meal logged successfully");
   } catch (err) {
     console.error("❌ saveMealLog caught an unexpected error:", err);
+    toast.error("Failed to save your meal log");
     // no rethrow here to prevent UI crash
   }
 };
-
-/**
- * (Optional) Fetches the last 7 meal logs for the current user (by user_id or anon UUID)
- */
-// export const getMealHistory = async () => {
-//   const { data: { user } } = await supabase.auth.getUser();
-//   const uuid = user?.id || getAnonUserId();
-
-//   const { data, error } = await supabase
-//     .from("meal_logs")
-//     .select("*")
-//     .eq("user_id", uuid)
-//     .order("created_at", { ascending: false })
-//     .limit(7);
-
-//   if (error) {
-//     console.error("❌ Error fetching meal history:", error);
-//     return [];
-//   }
-
-//   return data;
-// };

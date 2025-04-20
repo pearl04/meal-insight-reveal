@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from "react";
 import { useMealCheckState, AppState } from "../hooks/useMealCheckState";
 import { saveMealLog } from "@/services/food/logService";
@@ -22,6 +23,7 @@ const MealCheck = () => {
 
   const [inputText, setInputText] = useState("");
   const hasConfirmed = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (appState !== AppState.CONFIRMING_ITEMS) {
@@ -30,32 +32,41 @@ const MealCheck = () => {
   }, [appState]);
 
   const handleNutritionConfirm = async (foodItems: FoodItem[]) => {
+    if (hasConfirmed.current) return; // Prevent duplicate saves
+    
     try {
+      setIsSaving(true);
+      hasConfirmed.current = true;
       await handleItemsConfirmed(foodItems);
 
-      setTimeout(async () => {
-        const itemsWithNutrition = nutritionResults.filter(
-          (item): item is FoodWithNutrition => !!item.nutrition
-        );
+      const itemsWithNutrition = nutritionResults.filter(
+        (item): item is FoodWithNutrition => !!item.nutrition
+      );
 
-        if (itemsWithNutrition.length > 0) {
-          const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (itemsWithNutrition.length > 0) {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-          if (userError || !user) {
-            toast.error("Not logged in. Cannot save meal log.");
-            return;
-          }
-
+        if (userError || !user) {
+          console.log("No authenticated user found, using anonymous ID");
+          await saveMealLog(foodItems, itemsWithNutrition);
+        } else {
           console.log("📦 Saving meal log for user id:", user.id);
           await saveMealLog(foodItems, itemsWithNutrition, user.id);
-          toast.success("Meal logged successfully!");
         }
-      }, 500);
+      }
     } catch (error) {
       console.error("❌ Error saving meal log:", error);
       toast.error("Failed to save meal log");
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (appState === AppState.CONFIRMING_ITEMS && !hasConfirmed.current) {
+      handleNutritionConfirm(foodItems);
+    }
+  }, [appState, foodItems]);
 
   const renderStep = () => {
     switch (appState) {
@@ -86,12 +97,6 @@ const MealCheck = () => {
         return <AnalyzingState />;
 
       case AppState.CONFIRMING_ITEMS:
-        if (!hasConfirmed.current) {
-          hasConfirmed.current = true;
-          handleNutritionConfirm(foodItems);
-        }
-        return <CalculatingState />;
-
       case AppState.CALCULATING:
         return <CalculatingState />;
 
