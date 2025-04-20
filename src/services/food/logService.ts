@@ -18,22 +18,19 @@ export const saveMealLog = async (
     // Important: Debug logs for meal logging flow
     console.log("💾 saveMealLog CALLED with userId:", userId);
 
-    // For anonymous users, get a clean UUID format (no prefix)
-    let uuid = userId;
+    // For anonymous users, get the anon ID with prefix
+    let effectiveUserId = userId;
     let isMockData = false;
     
-    if (!uuid) {
-      uuid = getAnonUserId(); // Returns clean UUID
+    if (!effectiveUserId) {
+      effectiveUserId = getAnonUserId(); // Now returns with prefix
       isMockData = true; // Flag as mock data for anonymous users
-      console.log("Using anonymous ID for meal log:", uuid);
+      console.log("Using anonymous ID for meal log:", effectiveUserId);
     } else {
-      console.log("Using authenticated user ID for meal log:", uuid);
-      
-      // Ensure the auth userId is clean (no prefix) - extra safeguard
-      uuid = uuid.replace("anon_", "");
+      console.log("Using authenticated user ID for meal log:", effectiveUserId);
     }
     
-    if (!uuid) {
+    if (!effectiveUserId) {
       console.error("❌ No valid user ID for meal logging");
       toast.error("Failed to save meal log: No valid user ID");
       return;
@@ -62,7 +59,7 @@ export const saveMealLog = async (
     };
 
     const mealLogData: MealLogInsert = {
-      user_id: uuid,
+      user_id: effectiveUserId,
       food_items: formattedFoodItems,
       nutrition_summary: formattedNutritionSummary,
       mock_data: isMockData, // true for anonymous users

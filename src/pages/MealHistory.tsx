@@ -25,6 +25,7 @@ export default function MealHistory() {
   const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,18 +36,21 @@ export default function MealHistory() {
         // First, check for authenticated user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         
-        // Initialize the currentUserId to null
-        let currentUserId = null;
-        let isAnon = false;
+        // Initialize variables
+        let currentUserId: string | null = null;
+        let anonUserId: string | null = null;
         
         if (user?.id) {
+          // User is authenticated
           currentUserId = user.id;
+          setIsAnonymous(false);
           console.log("Using authenticated user ID:", currentUserId);
         } else {
-          // If not logged in, use anonymous ID from localStorage (clean format)
-          currentUserId = getAnonUserId();
-          isAnon = true;
-          console.log("Using anonymous ID:", currentUserId);
+          // User is anonymous
+          anonUserId = getAnonUserId();
+          currentUserId = anonUserId;
+          setIsAnonymous(true);
+          console.log("Using anonymous ID:", anonUserId);
         }
 
         setUserId(currentUserId);
@@ -57,67 +61,81 @@ export default function MealHistory() {
           return;
         }
 
-        // CRITICAL: Let's directly query the database to see what's there regardless of user
         console.log("-------- DEBUGGING CRITICAL --------");
-        const { data: allLogs, error: allLogsError } = await supabase
+        // Log all available logs for debugging
+        const { data: allLogs } = await supabase
           .from("meal_logs")
           .select("*")
+          .order("created_at", { ascending: false })
           .limit(100);
           
         console.log(`DEBUG: Found ${allLogs?.length || 0} total logs in database:`, allLogs);
         
-        if (allLogsError) {
-          console.error("Error fetching all logs:", allLogsError);
-        } else if (allLogs && allLogs.length > 0) {
-          // Log all IDs to compare
+        if (allLogs && allLogs.length > 0) {
           console.log("Available user IDs in database:", allLogs.map(log => log.user_id));
         }
         
-        console.log(`Current user ID (${isAnon ? 'anon' : 'auth'}):"${currentUserId}"`);
-        console.log("-------- END DEBUGGING --------");
-
-        // Now fetch the specific user's logs
-        console.log(`Fetching meal logs for user: ${currentUserId}`);
+        console.log(`Current user ID (${isAnonymous ? 'anon' : 'auth'}):"${currentUserId}"`);
         
-        // Important: Make the query simpler, but more comprehensive
-        const { data, error } = await supabase
-          .from("meal_logs")
-          .select("*")
-          .eq("user_id", currentUserId)
-          .order("created_at", { ascending: false })
-          .limit(50);
+        // Fetch authenticated user logs
+        let logs: MealLog[] = [];
         
-        if (error) {
-          console.error("Error fetching meal logs:", error);
-          toast.error("Failed to load meal history");
-        } else {
-          console.log(`Received ${data?.length || 0} meal logs:`, data);
-          setMealLogs(data as MealLog[] || []);
+        // Perform a direct database search with the exact user ID for authenticated user
+        if (user?.id) {
+          console.log("Fetching meal logs for authenticated user:", user.id);
+          const { data: authLogs, error } = await supabase
+            .from("meal_logs")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false });
           
-          // IMPORTANT: If authenticated user has no logs, let's try to find any logs that might 
-          // have been saved with a previous anonymous ID
-          if (data.length === 0 && !isAnon) {
-            const anonId = getAnonUserId();
-            if (anonId) {
-              console.log("No authenticated logs found, checking for anonymous logs with ID:", anonId);
+          if (error) {
+            console.error("Error fetching authenticated logs:", error);
+          } else {
+            console.log(`Received ${authLogs?.length || 0} authenticated meal logs`);
+            logs = [...(authLogs || [])];
+          }
+
+          // If no authenticated logs and we have an anonymous ID
+          if (logs.length === 0) {
+            anonUserId = getAnonUserId();
+            console.log("No authenticated logs found. Checking anonymous logs with ID:", anonUserId);
+            
+            const { data: anonLogs, error: anonError } = await supabase
+              .from("meal_logs")
+              .select("*") 
+              .eq("user_id", anonUserId)
+              .order("created_at", { ascending: false });
               
-              const { data: anonData, error: anonError } = await supabase
-                .from("meal_logs")
-                .select("*")
-                .eq("user_id", anonId)
-                .order("created_at", { ascending: false })
-                .limit(15);
-                
-              if (anonError) {
-                console.error("Error fetching anonymous logs:", anonError);
-              } else if (anonData && anonData.length > 0) {
-                console.log(`Found ${anonData.length} anonymous logs:`, anonData);
-                setMealLogs(anonData as MealLog[] || []);
-                toast.info("Showing your previous anonymous meal logs. Future logs will be saved to your account.");
-              }
+            if (anonError) {
+              console.error("Error fetching anonymous logs:", anonError);
+            } else if (anonLogs && anonLogs.length > 0) {
+              console.log(`Found ${anonLogs.length} anonymous logs`);
+              logs = [...anonLogs];
+              toast.info("Showing your previous anonymous meal logs. Future logs will be saved to your account.");
             }
           }
+        } 
+        // For anonymous users
+        else if (anonUserId) {
+          console.log("Fetching meal logs for anonymous user:", anonUserId);
+          const { data: anonLogs, error } = await supabase
+            .from("meal_logs")
+            .select("*")
+            .eq("user_id", anonUserId)
+            .order("created_at", { ascending: false });
+          
+          if (error) {
+            console.error("Error fetching anonymous logs:", error);
+          } else {
+            console.log(`Received ${anonLogs?.length || 0} anonymous meal logs`);
+            logs = [...(anonLogs || [])];
+          }
         }
+        
+        console.log("Final logs to display:", logs);
+        setMealLogs(logs || []);
+        console.log("-------- END DEBUGGING --------");
       } catch (err) {
         console.error("Unexpected error fetching meal logs:", err);
         toast.error("An error occurred while loading meal history");
@@ -188,18 +206,20 @@ export default function MealHistory() {
 
       {userId && (
         <div className="text-sm mb-4 text-center text-muted-foreground">
-          {isAnonUser(userId) ? 
+          {isAnonymous ? 
             'Viewing as anonymous user. Sign in to save your history across devices.' :
             'Viewing as authenticated user'
           }
         </div>
       )}
 
-      {/* Debug section for development only */}
-      <div className="mb-4 p-2 bg-gray-100 rounded text-xs hidden">
+      {/* Debug section for development 
+      <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
         <div>User ID: {userId || 'None'}</div>
-        <div>Is Anonymous: {isAnonUser(userId || '') ? 'Yes' : 'No'}</div>
+        <div>Is Anonymous: {isAnonymous ? 'Yes' : 'No'}</div>
+        <div>Database Records: {mealLogs.length}</div>
       </div>
+      */}
 
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse border border-green-600">
