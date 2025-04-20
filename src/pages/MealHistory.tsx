@@ -7,9 +7,10 @@ import { Json } from "@/integrations/supabase/types";
 interface MealLog {
   id: string;
   created_at: string;
-  food_items: Json; // Updated from any[] to Json type
-  nutrition_summary: {
-    items: {
+  food_items: Json;
+  // Update the nutrition_summary type to accept the Json type from Supabase
+  nutrition_summary: Json | {
+    items?: {
       feedback?: string;
       rating?: string;
       healthy_swap?: string;
@@ -41,12 +42,33 @@ export default function MealHistory() {
       if (error) {
         console.error("Error fetching meal logs:", error);
       } else {
-        setMealLogs(data || []);
+        // Cast the data to MealLog[] to ensure TypeScript is happy
+        setMealLogs(data as MealLog[] || []);
       }
     }
 
     fetchMealLogs();
   }, []);
+
+  // Helper function to safely extract values from nutrition_summary
+  const extractNutritionInfo = (log: MealLog, key: string, defaultValue: string = "N/A"): string => {
+    // Check if it's the expected object structure
+    if (typeof log.nutrition_summary === 'object' && 
+        log.nutrition_summary !== null && 
+        'items' in log.nutrition_summary && 
+        Array.isArray(log.nutrition_summary.items) && 
+        log.nutrition_summary.items.length > 0) {
+      return log.nutrition_summary.items[0]?.[key as keyof typeof log.nutrition_summary.items[0]] || defaultValue;
+    }
+    
+    // Try to access as generic JSON if it doesn't match our expected structure
+    try {
+      // @ts-ignore - we're intentionally being flexible here
+      return log.nutrition_summary?.items?.[0]?.[key] || defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -79,16 +101,20 @@ export default function MealHistory() {
               </tr>
             ) : (
               mealLogs.map((log) => {
-                // Handle food_items as it might be a Json type now, not necessarily an array
+                // Handle food_items as it might be a Json type now
                 const mealName = Array.isArray(log.food_items) && log.food_items.length > 0 
                   ? log.food_items[0] 
                   : typeof log.food_items === 'object' && log.food_items !== null 
                     ? JSON.stringify(log.food_items).slice(0, 30) + '...'
-                    : "N/A";
+                    : typeof log.food_items === 'string'
+                      ? log.food_items
+                      : "N/A";
                     
-                const feedback = log.nutrition_summary?.items?.[0]?.feedback || "N/A";
-                const rating = log.nutrition_summary?.items?.[0]?.rating || "N/A";
-                const swapSuggestion = log.nutrition_summary?.items?.[0]?.healthy_swap || "N/A";
+                // Use our helper function to safely extract values
+                const feedback = extractNutritionInfo(log, 'feedback');
+                const rating = extractNutritionInfo(log, 'rating');
+                const swapSuggestion = extractNutritionInfo(log, 'healthy_swap');
+                
                 const dateObj = new Date(log.created_at);
 
                 return (
@@ -99,7 +125,7 @@ export default function MealHistory() {
                     <td className="border border-green-600 px-4 py-2">
                       {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="border border-green-600 px-4 py-2">{mealName}</td>
+                    <td className="border border-green-600 px-4 py-2">{String(mealName)}</td>
                     <td className="border border-green-600 px-4 py-2">{feedback}</td>
                     <td className="border border-green-600 px-4 py-2">{rating}</td>
                     <td className="border border-green-600 px-4 py-2">{swapSuggestion}</td>
