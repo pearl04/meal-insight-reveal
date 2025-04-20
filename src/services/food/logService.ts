@@ -15,18 +15,28 @@ export const saveMealLog = async (
   userId?: string
 ): Promise<void> => {
   try {
-    console.log("👉 saveMealLog CALLED with userId:", userId);
+    // Important: Debug logs for meal logging flow
+    console.log("💾 saveMealLog CALLED with userId:", userId);
 
     // For anonymous users, get a clean UUID format (no prefix)
     let uuid = userId;
     let isMockData = false;
     
     if (!uuid) {
-      uuid = getAnonUserId(); // Now returns clean UUID
+      uuid = getAnonUserId(); // Returns clean UUID
       isMockData = true; // Flag as mock data for anonymous users
       console.log("Using anonymous ID for meal log:", uuid);
     } else {
       console.log("Using authenticated user ID for meal log:", uuid);
+      
+      // Ensure the auth userId is clean (no prefix) - extra safeguard
+      uuid = uuid.replace("anon_", "");
+    }
+    
+    if (!uuid) {
+      console.error("❌ No valid user ID for meal logging");
+      toast.error("Failed to save meal log: No valid user ID");
+      return;
     }
     
     // Format the food items to ensure they're properly saved

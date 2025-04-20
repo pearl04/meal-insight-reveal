@@ -57,61 +57,66 @@ export default function MealHistory() {
           return;
         }
 
-        // For debugging - try to get ALL logs first to see what's actually in the database
+        // CRITICAL: Let's directly query the database to see what's there regardless of user
+        console.log("-------- DEBUGGING CRITICAL --------");
         const { data: allLogs, error: allLogsError } = await supabase
           .from("meal_logs")
           .select("*")
-          .order("created_at", { ascending: false })
-          .limit(50);
+          .limit(100);
           
         console.log(`DEBUG: Found ${allLogs?.length || 0} total logs in database:`, allLogs);
         
         if (allLogsError) {
           console.error("Error fetching all logs:", allLogsError);
+        } else if (allLogs && allLogs.length > 0) {
+          // Log all IDs to compare
+          console.log("Available user IDs in database:", allLogs.map(log => log.user_id));
         }
+        
+        console.log(`Current user ID (${isAnon ? 'anon' : 'auth'}):"${currentUserId}"`);
+        console.log("-------- END DEBUGGING --------");
 
         // Now fetch the specific user's logs
         console.log(`Fetching meal logs for user: ${currentUserId}`);
         
-        // Build query based on user type
-        let query;
-        if (isAnon) {
-          // For anonymous users, try to find by the clean ID or prefixed ID in localStorage
-          const anonStoredId = localStorage.getItem("anon_user_id");
-          console.log("Looking for anonymous logs with stored ID:", anonStoredId);
-          
-          // Look for logs where user_id is either the clean ID or the prefixed version
-          query = supabase
-            .from("meal_logs")
-            .select("*")
-            .eq("mock_data", true)
-            .or(`user_id.eq.${currentUserId},user_id.eq.anon_${currentUserId}`);
-            
-          if (anonStoredId && anonStoredId !== `anon_${currentUserId}`) {
-            // Also try with the stored ID without anon_ prefix
-            const cleanStoredId = anonStoredId.replace("anon_", "");
-            console.log("Also trying with stored ID (no prefix):", cleanStoredId);
-            query = query.or(`user_id.eq.${cleanStoredId}`);
-          }
-        } else {
-          // For authenticated users, query is simpler
-          query = supabase
-            .from("meal_logs")
-            .select("*")
-            .eq("user_id", currentUserId);
-        }
-        
-        // Add ordering and limit
-        const { data, error } = await query
+        // Important: Make the query simpler, but more comprehensive
+        const { data, error } = await supabase
+          .from("meal_logs")
+          .select("*")
+          .eq("user_id", currentUserId)
           .order("created_at", { ascending: false })
-          .limit(15);
-
+          .limit(50);
+        
         if (error) {
           console.error("Error fetching meal logs:", error);
           toast.error("Failed to load meal history");
         } else {
           console.log(`Received ${data?.length || 0} meal logs:`, data);
           setMealLogs(data as MealLog[] || []);
+          
+          // IMPORTANT: If authenticated user has no logs, let's try to find any logs that might 
+          // have been saved with a previous anonymous ID
+          if (data.length === 0 && !isAnon) {
+            const anonId = getAnonUserId();
+            if (anonId) {
+              console.log("No authenticated logs found, checking for anonymous logs with ID:", anonId);
+              
+              const { data: anonData, error: anonError } = await supabase
+                .from("meal_logs")
+                .select("*")
+                .eq("user_id", anonId)
+                .order("created_at", { ascending: false })
+                .limit(15);
+                
+              if (anonError) {
+                console.error("Error fetching anonymous logs:", anonError);
+              } else if (anonData && anonData.length > 0) {
+                console.log(`Found ${anonData.length} anonymous logs:`, anonData);
+                setMealLogs(anonData as MealLog[] || []);
+                toast.info("Showing your previous anonymous meal logs. Future logs will be saved to your account.");
+              }
+            }
+          }
         }
       } catch (err) {
         console.error("Unexpected error fetching meal logs:", err);
@@ -189,6 +194,12 @@ export default function MealHistory() {
           }
         </div>
       )}
+
+      {/* Debug section for development only */}
+      <div className="mb-4 p-2 bg-gray-100 rounded text-xs hidden">
+        <div>User ID: {userId || 'None'}</div>
+        <div>Is Anonymous: {isAnonUser(userId || '') ? 'Yes' : 'No'}</div>
+      </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse border border-green-600">

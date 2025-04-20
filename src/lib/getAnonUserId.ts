@@ -10,17 +10,16 @@ export function getAnonUserId(): string {
   const stored = localStorage.getItem(key);
   
   if (stored) {
-    // Ensure consistent format with authenticated UUIDs
     console.log("Using existing anonymous ID from localStorage:", stored);
-    return stored.replace("anon_", ""); // Remove prefix for database queries
+    // Always return the raw UUID format without prefix for database consistency
+    return stored.replace("anon_", "");
   }
 
-  // Generate new UUID without prefix for consistency with auth user IDs
+  // Generate new UUID
   const newId = uuidv4();
   console.log("Created new anonymous ID:", newId);
   
-  // We'll store with anon_ prefix in localStorage for identification
-  // but return clean UUID for database operations
+  // Store with prefix for identification but return clean UUID
   localStorage.setItem(key, `anon_${newId}`);
   return newId;
 }
@@ -30,6 +29,14 @@ export function getAnonUserId(): string {
  */
 export function isAnonUser(userId: string): boolean {
   const storedId = localStorage.getItem("anon_user_id");
-  // If stored ID matches or starts with anon_
-  return userId.startsWith("anon_") || (storedId && storedId.includes(userId));
+  
+  if (!userId) return false;
+  if (!storedId) return false;
+  
+  // Clean both IDs for comparison
+  const cleanStoredId = storedId.replace("anon_", "");
+  const cleanUserId = userId.replace("anon_", "");
+  
+  // Compare the clean versions
+  return cleanStoredId === cleanUserId;
 }
