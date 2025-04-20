@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Json } from "@/integrations/supabase/types";
+import { getAnonUserId } from "@/lib/getAnonUserId";
+import { toast } from "sonner";
 
 interface MealLog {
   id: string;
@@ -22,45 +24,59 @@ interface MealLog {
 export default function MealHistory() {
   const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchMealLogs() {
       setIsLoading(true);
       
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      let userId = user?.id;
-      
-      // If not logged in, use local storage ID
-      if (!userId) {
-        const localId = localStorage.getItem('anonymousId');
-        if (localId) {
-          userId = localId;
-          console.log("Using anonymous ID from localStorage:", localId);
+      try {
+        // First, check for authenticated user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        let currentUserId = null;
+        
+        if (user?.id) {
+          currentUserId = user.id;
+          console.log("Using authenticated user ID:", currentUserId);
+        } else {
+          // If not logged in, use anonymous ID from localStorage
+          const localId = getAnonUserId();
+          currentUserId = localId;
+          console.log("Using anonymous ID:", currentUserId);
         }
-      }
 
-      if (!userId) {
-        console.log("No user ID found, showing empty meal history");
+        setUserId(currentUserId);
+
+        if (!currentUserId) {
+          console.log("No user ID found, showing empty meal history");
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch the meal logs with the user ID
+        console.log(`Fetching meal logs for user: ${currentUserId}`);
+        const { data, error } = await supabase
+          .from("meal_logs")
+          .select("*")
+          .eq("user_id", currentUserId)
+          .order("created_at", { ascending: false })
+          .limit(15);
+
+        if (error) {
+          console.error("Error fetching meal logs:", error);
+          toast.error("Failed to load meal history");
+        } else {
+          console.log(`Received ${data?.length || 0} meal logs:`, data);
+          setMealLogs(data as MealLog[] || []);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching meal logs:", err);
+        toast.error("An error occurred while loading meal history");
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      const { data, error } = await supabase
-        .from("meal_logs")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(7);
-
-      if (error) {
-        console.error("Error fetching meal logs:", error);
-      } else {
-        setMealLogs(data as MealLog[] || []);
-      }
-      
-      setIsLoading(false);
     }
 
     fetchMealLogs();
@@ -122,6 +138,15 @@ export default function MealHistory() {
         ← Back to Home
       </button>
       <h1 className="text-2xl font-bold mb-6 text-center">My Meal History</h1>
+
+      {userId && (
+        <div className="text-sm mb-4 text-center text-muted-foreground">
+          {userId.startsWith('anon_') ? 
+            'Viewing as anonymous user. Sign in to save your history across devices.' :
+            'Viewing as authenticated user'
+          }
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse border border-green-600">

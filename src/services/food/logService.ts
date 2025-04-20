@@ -17,7 +17,9 @@ export const saveMealLog = async (
   try {
     console.log("👉 saveMealLog CALLED with userId:", userId);
 
-    const uuid = userId || getAnonUserId(); // fallback if no user ID provided
+    // Use provided user ID or get anonymous ID
+    const uuid = userId || getAnonUserId();
+    console.log("Using user ID for meal log:", uuid);
     
     // Format the food items to ensure they're properly saved
     const formattedFoodItems = foodItems.map(item => ({
@@ -50,7 +52,7 @@ export const saveMealLog = async (
 
     console.log("🛠 Meal log object to insert:", JSON.stringify(mealLogData, null, 2));
 
-    const { error } = await supabase.from("meal_logs").insert([mealLogData]);
+    const { data, error } = await supabase.from("meal_logs").insert([mealLogData]).select();
 
     if (error) {
       console.error("❌ Supabase insert error:", error);
@@ -58,7 +60,7 @@ export const saveMealLog = async (
       throw error; // important so we can handle if needed
     }
 
-    console.log("✅ Meal log inserted successfully");
+    console.log("✅ Meal log inserted successfully:", data);
     toast.success("Meal logged successfully");
   } catch (err) {
     console.error("❌ saveMealLog caught an unexpected error:", err);
