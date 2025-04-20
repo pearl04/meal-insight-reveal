@@ -8,7 +8,6 @@ interface MealLog {
   id: string;
   created_at: string;
   food_items: Json;
-  // Update the nutrition_summary type to accept the Json type from Supabase
   nutrition_summary: Json | {
     items?: {
       feedback?: string;
@@ -58,7 +57,6 @@ export default function MealHistory() {
       if (error) {
         console.error("Error fetching meal logs:", error);
       } else {
-        // Cast the data to MealLog[] to ensure TypeScript is happy
         setMealLogs(data as MealLog[] || []);
       }
       
@@ -86,6 +84,33 @@ export default function MealHistory() {
     } catch {
       return defaultValue;
     }
+  };
+
+  // Helper function to safely extract meal name from food_items
+  const extractMealName = (foodItems: Json): string => {
+    // If foodItems is an array
+    if (Array.isArray(foodItems) && foodItems.length > 0) {
+      // Check if the first item has a name property
+      if (typeof foodItems[0] === 'object' && foodItems[0] !== null && 'name' in foodItems[0]) {
+        return String(foodItems[0].name);
+      }
+      // If the first item is a string
+      else if (typeof foodItems[0] === 'string') {
+        return foodItems[0];
+      }
+    } 
+    // If foodItems is an object with names
+    else if (typeof foodItems === 'object' && foodItems !== null) {
+      // Try to access a name property
+      // @ts-ignore - we're being flexible to handle potential structures
+      if ('name' in foodItems) return String(foodItems.name);
+      
+      // If it's an object but no direct name, try to stringify a portion
+      return JSON.stringify(foodItems).slice(0, 30) + '...';
+    }
+    
+    // Fallback for strings or unknown formats
+    return typeof foodItems === 'string' ? foodItems : "N/A";
   };
 
   return (
@@ -125,16 +150,7 @@ export default function MealHistory() {
               </tr>
             ) : (
               mealLogs.map((log) => {
-                // Handle food_items as it might be a Json type now
-                const mealName = Array.isArray(log.food_items) && log.food_items.length > 0 
-                  ? log.food_items[0].name || log.food_items[0] 
-                  : typeof log.food_items === 'object' && log.food_items !== null 
-                    ? Array.isArray(log.food_items) 
-                      ? log.food_items.map((item: any) => item.name || item).join(', ')
-                      : JSON.stringify(log.food_items).slice(0, 30) + '...'
-                    : typeof log.food_items === 'string'
-                      ? log.food_items
-                      : "N/A";
+                const mealName = extractMealName(log.food_items);
                     
                 // Use our helper function to safely extract values
                 const feedback = extractNutritionInfo(log, 'feedback');
@@ -151,7 +167,7 @@ export default function MealHistory() {
                     <td className="border border-green-600 px-4 py-2">
                       {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="border border-green-600 px-4 py-2">{String(mealName)}</td>
+                    <td className="border border-green-600 px-4 py-2">{mealName}</td>
                     <td className="border border-green-600 px-4 py-2">{feedback}</td>
                     <td className="border border-green-600 px-4 py-2">{rating}</td>
                     <td className="border border-green-600 px-4 py-2">{swapSuggestion}</td>
