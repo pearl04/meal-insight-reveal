@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useMealCheckState, AppState } from "../hooks/useMealCheckState";
 import { saveMealLog } from "@/services/food/logService";
+import { supabase } from "@/lib/supabaseClient";
 import AnalyzingState from "./meal-check/AnalyzingState";
 import CalculatingState from "./meal-check/CalculatingState";
 import NutritionDisplay from "./NutritionDisplay";
@@ -31,13 +32,23 @@ const MealCheck = () => {
   const handleNutritionConfirm = async (foodItems: FoodItem[]) => {
     try {
       await handleItemsConfirmed(foodItems);
+
       setTimeout(async () => {
         const itemsWithNutrition = nutritionResults.filter(
           (item): item is FoodWithNutrition => !!item.nutrition
         );
+
         if (itemsWithNutrition.length > 0) {
-          await saveMealLog(foodItems, itemsWithNutrition);
-          toast.success("Meal logged successfully");
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+          if (userError || !user) {
+            toast.error("Not logged in. Cannot save meal log.");
+            return;
+          }
+
+          console.log("📦 Saving meal log for user id:", user.id);
+          await saveMealLog(foodItems, itemsWithNutrition, user.id);
+          toast.success("Meal logged successfully!");
         }
       }, 500);
     } catch (error) {
