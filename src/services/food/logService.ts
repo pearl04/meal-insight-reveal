@@ -17,9 +17,17 @@ export const saveMealLog = async (
   try {
     console.log("👉 saveMealLog CALLED with userId:", userId);
 
-    // Use provided user ID or get anonymous ID
-    const uuid = userId || getAnonUserId();
-    console.log("Using user ID for meal log:", uuid);
+    // For anonymous users, get a clean UUID format (no prefix)
+    let uuid = userId;
+    let isMockData = false;
+    
+    if (!uuid) {
+      uuid = getAnonUserId(); // Now returns clean UUID
+      isMockData = true; // Flag as mock data for anonymous users
+      console.log("Using anonymous ID for meal log:", uuid);
+    } else {
+      console.log("Using authenticated user ID for meal log:", uuid);
+    }
     
     // Format the food items to ensure they're properly saved
     const formattedFoodItems = foodItems.map(item => ({
@@ -47,7 +55,7 @@ export const saveMealLog = async (
       user_id: uuid,
       food_items: formattedFoodItems,
       nutrition_summary: formattedNutritionSummary,
-      mock_data: !userId, // true if no userId (anonymous user)
+      mock_data: isMockData, // true for anonymous users
     };
 
     console.log("🛠 Meal log object to insert:", JSON.stringify(mealLogData, null, 2));

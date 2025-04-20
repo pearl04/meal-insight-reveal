@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Json } from "@/integrations/supabase/types";
-import { getAnonUserId } from "@/lib/getAnonUserId";
+import { getAnonUserId, isAnonUser } from "@/lib/getAnonUserId";
 import { toast } from "sonner";
 
 interface MealLog {
@@ -35,15 +35,17 @@ export default function MealHistory() {
         // First, check for authenticated user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         
+        // Initialize the currentUserId to null
         let currentUserId = null;
+        let isAnon = false;
         
         if (user?.id) {
           currentUserId = user.id;
           console.log("Using authenticated user ID:", currentUserId);
         } else {
-          // If not logged in, use anonymous ID from localStorage
-          const localId = getAnonUserId();
-          currentUserId = localId;
+          // If not logged in, use anonymous ID from localStorage (clean format)
+          currentUserId = getAnonUserId();
+          isAnon = true;
           console.log("Using anonymous ID:", currentUserId);
         }
 
@@ -55,12 +57,52 @@ export default function MealHistory() {
           return;
         }
 
-        // Fetch the meal logs with the user ID
-        console.log(`Fetching meal logs for user: ${currentUserId}`);
-        const { data, error } = await supabase
+        // For debugging - try to get ALL logs first to see what's actually in the database
+        const { data: allLogs, error: allLogsError } = await supabase
           .from("meal_logs")
           .select("*")
-          .eq("user_id", currentUserId)
+          .order("created_at", { ascending: false })
+          .limit(50);
+          
+        console.log(`DEBUG: Found ${allLogs?.length || 0} total logs in database:`, allLogs);
+        
+        if (allLogsError) {
+          console.error("Error fetching all logs:", allLogsError);
+        }
+
+        // Now fetch the specific user's logs
+        console.log(`Fetching meal logs for user: ${currentUserId}`);
+        
+        // Build query based on user type
+        let query;
+        if (isAnon) {
+          // For anonymous users, try to find by the clean ID or prefixed ID in localStorage
+          const anonStoredId = localStorage.getItem("anon_user_id");
+          console.log("Looking for anonymous logs with stored ID:", anonStoredId);
+          
+          // Look for logs where user_id is either the clean ID or the prefixed version
+          query = supabase
+            .from("meal_logs")
+            .select("*")
+            .eq("mock_data", true)
+            .or(`user_id.eq.${currentUserId},user_id.eq.anon_${currentUserId}`);
+            
+          if (anonStoredId && anonStoredId !== `anon_${currentUserId}`) {
+            // Also try with the stored ID without anon_ prefix
+            const cleanStoredId = anonStoredId.replace("anon_", "");
+            console.log("Also trying with stored ID (no prefix):", cleanStoredId);
+            query = query.or(`user_id.eq.${cleanStoredId}`);
+          }
+        } else {
+          // For authenticated users, query is simpler
+          query = supabase
+            .from("meal_logs")
+            .select("*")
+            .eq("user_id", currentUserId);
+        }
+        
+        // Add ordering and limit
+        const { data, error } = await query
           .order("created_at", { ascending: false })
           .limit(15);
 
@@ -141,7 +183,7 @@ export default function MealHistory() {
 
       {userId && (
         <div className="text-sm mb-4 text-center text-muted-foreground">
-          {userId.startsWith('anon_') ? 
+          {isAnonUser(userId) ? 
             'Viewing as anonymous user. Sign in to save your history across devices.' :
             'Viewing as authenticated user'
           }
