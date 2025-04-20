@@ -1,4 +1,3 @@
-
 import React from "react";
 import Header from "@/components/Header";
 import MealCheck from "../components/MealCheck";
@@ -23,11 +22,22 @@ const Index = () => {
             <p className="text-xl text-muted-foreground">
               Type your meals and get instant nutrition insights powered by AI
             </p>
-            {/* Removed duplicate login button from here since it's now in the header */}
           </div>
 
+          {/* Meal input component */}
           <MealCheck />
 
+          {/* New Button to navigate to Meal History */}
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => navigate("/meal-history")}
+              className="inline-block px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition duration-300"
+            >
+              View My Meal History
+            </button>
+          </div>
+
+          {/* Footer note */}
           <div className="mt-16 text-center text-sm text-muted-foreground">
             <p>
               MealCheck estimates nutritional values based on your input. Results are approximate and intended for general guidance.

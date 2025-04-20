@@ -28,7 +28,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const selectedModel = "google/gemini-2.5-pro-exp-03-25:free";
+    const selectedModel = 'openai/gpt-4.1-nano';
     console.log("🧠 Using model:", selectedModel);
 
     if (!text) {
