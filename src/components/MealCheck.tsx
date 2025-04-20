@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useMealCheckState, AppState } from "../hooks/useMealCheckState";
 import { saveMealLog } from "@/services/food/logService";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import AnalyzingState from "./meal-check/AnalyzingState";
 import CalculatingState from "./meal-check/CalculatingState";
 import NutritionDisplay from "./NutritionDisplay";

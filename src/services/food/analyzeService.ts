@@ -1,6 +1,6 @@
 
 import { FoodItem } from "@/types/nutrition";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client"; // corrected path here
 import posthog from 'posthog-js';
 
 
