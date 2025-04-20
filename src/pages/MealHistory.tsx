@@ -1,12 +1,13 @@
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client"; // changed import here
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { Json } from "@/integrations/supabase/types";
 
 interface MealLog {
   id: string;
   created_at: string;
-  food_items: any[];
+  food_items: Json; // Updated from any[] to Json type
   nutrition_summary: {
     items: {
       feedback?: string;
@@ -14,6 +15,8 @@ interface MealLog {
       healthy_swap?: string;
     }[];
   };
+  mock_data?: boolean;
+  user_id?: string;
 }
 
 export default function MealHistory() {
@@ -76,7 +79,13 @@ export default function MealHistory() {
               </tr>
             ) : (
               mealLogs.map((log) => {
-                const mealName = log.food_items?.[0] || "N/A";
+                // Handle food_items as it might be a Json type now, not necessarily an array
+                const mealName = Array.isArray(log.food_items) && log.food_items.length > 0 
+                  ? log.food_items[0] 
+                  : typeof log.food_items === 'object' && log.food_items !== null 
+                    ? JSON.stringify(log.food_items).slice(0, 30) + '...'
+                    : "N/A";
+                    
                 const feedback = log.nutrition_summary?.items?.[0]?.feedback || "N/A";
                 const rating = log.nutrition_summary?.items?.[0]?.rating || "N/A";
                 const swapSuggestion = log.nutrition_summary?.items?.[0]?.healthy_swap || "N/A";
