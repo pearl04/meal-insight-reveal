@@ -1,9 +1,11 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Json } from "@/integrations/supabase/types";
 import { getAnonUserId, isAnonUser } from "@/lib/getAnonUserId";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button"; // Add Button import
 
 interface MealLog {
   id: string;
@@ -64,7 +66,8 @@ export default function MealHistory() {
 
         // DEBUG: Check RLS permissions with a raw query
         console.log("🔑 Testing RLS permissions...");
-        const { data: permissionTest, error: permissionError } = await supabase.rpc('test_meal_log_access');
+        // Fix for type error: Explicitly type the function call to avoid the 'never' parameter issue
+        const { data: permissionTest, error: permissionError } = await supabase.rpc('test_meal_log_access', {});
         console.log("Permission test result:", permissionTest);
         if (permissionError) {
           console.error("RLS permission test error:", permissionError);
