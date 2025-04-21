@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -61,7 +60,6 @@ export default function MealHistory() {
         }
 
         console.log("🔑 Testing RLS permissions...");
-        // Fix here: No parameter should be passed for no-parameter RPC
         const { data: permissionTest, error: permissionError } = await supabase.rpc('test_meal_log_access');
         console.log("Permission test result:", permissionTest);
         if (permissionError) {
@@ -70,7 +68,7 @@ export default function MealHistory() {
 
         console.log("-------- DEBUGGING CRITICAL --------");
         const { data: allLogs } = await supabase
-          .from("meal_logs")
+          .from<MealLog>("meal_logs")
           .select("*")
           .order("created_at", { ascending: false })
           .limit(100);
@@ -90,7 +88,7 @@ export default function MealHistory() {
           console.log("SQL equivalent: SELECT * FROM meal_logs WHERE user_id = '" + user.id + "'");
           
           const { data: authLogs, error } = await supabase
-            .from("meal_logs")
+            .from<MealLog>("meal_logs")
             .select("*")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false });
@@ -107,7 +105,7 @@ export default function MealHistory() {
             console.log("No authenticated logs found. Checking anonymous logs with ID:", anonUserId);
             
             const { data: anonLogs, error: anonError } = await supabase
-              .from("meal_logs")
+              .from<MealLog>("meal_logs")
               .select("*") 
               .eq("user_id", anonUserId)
               .order("created_at", { ascending: false });
@@ -125,7 +123,7 @@ export default function MealHistory() {
           console.log("SQL equivalent: SELECT * FROM meal_logs WHERE user_id = '" + anonUserId + "'");
           
           const { data: anonLogs, error } = await supabase
-            .from("meal_logs")
+            .from<MealLog>("meal_logs")
             .select("*")
             .eq("user_id", anonUserId)
             .order("created_at", { ascending: false });
