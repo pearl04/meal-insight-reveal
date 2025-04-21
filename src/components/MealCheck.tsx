@@ -26,12 +26,12 @@ const MealCheck: React.FC = () => {
   useEffect(() => {
     if (appState === AppState.CONFIRMING_ITEMS && !hasSavedRef.current) {
       hasSavedRef.current = true;
-
+  
       (async () => {
         try {
           console.log("⚡ Starting handleItemsConfirmed...");
           await handleItemsConfirmed(foodItems);
-
+  
           console.log("⚡ Rebuilding valid items after confirmation...");
           const enrichedItems = foodItems.filter(
             (item): item is FoodWithNutrition =>
@@ -42,37 +42,43 @@ const MealCheck: React.FC = () => {
               "carbs" in item.nutrition &&
               "fat" in item.nutrition
           );
-
+  
           if (enrichedItems.length === 0) {
             console.warn("⚠️ No valid enriched food items to save");
             return;
           }
-
+  
           const {
             data: { user },
             error: userErr,
           } = await supabase.auth.getUser();
-
+  
           if (userErr || !user) {
             toast.error("You must be signed in to save your meals");
             return;
           }
-
-          console.log("🍱 Saving meal log for user:", user.id);
-          await saveMealLog(foodItems, enrichedItems, user.id);
-          toast.success("Meal logged successfully!");
-
+  
+          console.log("🍱 Saving meal logs for user:", user.id);
+  
+          // ✨ IMPORTANT CHANGE ✨
+          for (const item of enrichedItems) {
+            await saveMealLog([item], [item], user.id);
+          }
+  
+          toast.success("Meal(s) logged successfully!");
+  
         } catch (err) {
           console.error("❌ Error during saveMealLog:", err);
           toast.error("Failed to save meal log");
         }
       })();
     }
-
+  
     if (appState !== AppState.CONFIRMING_ITEMS) {
       hasSavedRef.current = false;
     }
   }, [appState, foodItems, handleItemsConfirmed]);
+  
 
   const renderStep = () => {
     switch (appState) {
