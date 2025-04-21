@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Json } from "@/integrations/supabase/types";
+import { Json, Database } from "@/integrations/supabase/types";
 import { getAnonUserId, isAnonUser } from "@/lib/getAnonUserId";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,8 @@ interface MealLog {
   mock_data?: boolean;
   user_id?: string;
 }
+
+type TestMealLogAccess = boolean | null;
 
 export default function MealHistory() {
   const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
@@ -60,7 +62,7 @@ export default function MealHistory() {
         }
 
         console.log("🔑 Testing RLS permissions...");
-        const { data: permissionTest, error: permissionError } = await supabase.rpc('test_meal_log_access');
+        const { data: permissionTest, error: permissionError } = await supabase.rpc<TestMealLogAccess>('test_meal_log_access');
         console.log("Permission test result:", permissionTest);
         if (permissionError) {
           console.error("RLS permission test error:", permissionError);
@@ -68,9 +70,9 @@ export default function MealHistory() {
 
         console.log("-------- DEBUGGING CRITICAL --------");
         const { data: allLogs } = await supabase
-          .from<MealLog>("meal_logs")
-          .select("*")
-          .order("created_at", { ascending: false })
+          .from('meal_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
           .limit(100);
           
         console.log(`DEBUG: Found ${allLogs?.length || 0} total logs in database:`, allLogs);
@@ -88,16 +90,16 @@ export default function MealHistory() {
           console.log("SQL equivalent: SELECT * FROM meal_logs WHERE user_id = '" + user.id + "'");
           
           const { data: authLogs, error } = await supabase
-            .from<MealLog>("meal_logs")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false });
+            .from('meal_logs')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
           
           if (error) {
             console.error("Error fetching authenticated logs:", error);
-          } else {
+          } else if (authLogs) {
             console.log(`Received ${authLogs?.length || 0} authenticated meal logs`);
-            logs = [...(authLogs || [])];
+            logs = [...(authLogs as MealLog[] || [])];
           }
 
           if (logs.length === 0) {
@@ -105,16 +107,16 @@ export default function MealHistory() {
             console.log("No authenticated logs found. Checking anonymous logs with ID:", anonUserId);
             
             const { data: anonLogs, error: anonError } = await supabase
-              .from<MealLog>("meal_logs")
-              .select("*") 
-              .eq("user_id", anonUserId)
-              .order("created_at", { ascending: false });
+              .from('meal_logs')
+              .select('*') 
+              .eq('user_id', anonUserId)
+              .order('created_at', { ascending: false });
               
             if (anonError) {
               console.error("Error fetching anonymous logs:", anonError);
             } else if (anonLogs && anonLogs.length > 0) {
               console.log(`Found ${anonLogs.length} anonymous logs`);
-              logs = [...anonLogs];
+              logs = [...(anonLogs as MealLog[])];
               toast.info("Showing your previous anonymous meal logs. Future logs will be saved to your account.");
             }
           }
@@ -123,16 +125,16 @@ export default function MealHistory() {
           console.log("SQL equivalent: SELECT * FROM meal_logs WHERE user_id = '" + anonUserId + "'");
           
           const { data: anonLogs, error } = await supabase
-            .from<MealLog>("meal_logs")
-            .select("*")
-            .eq("user_id", anonUserId)
-            .order("created_at", { ascending: false });
+            .from('meal_logs')
+            .select('*')
+            .eq('user_id', anonUserId)
+            .order('created_at', { ascending: false });
           
           if (error) {
             console.error("Error fetching anonymous logs:", error);
-          } else {
+          } else if (anonLogs) {
             console.log(`Received ${anonLogs?.length || 0} anonymous meal logs`);
-            logs = [...(anonLogs || [])];
+            logs = [...(anonLogs as MealLog[] || [])];
           }
         }
         
