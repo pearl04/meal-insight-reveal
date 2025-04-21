@@ -1,8 +1,7 @@
-
 import React, { useRef, useEffect, useState } from "react";
 import { useMealCheckState, AppState } from "../hooks/useMealCheckState";
 import { saveMealLog } from "@/services/food/logService";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import AnalyzingState from "./meal-check/AnalyzingState";
 import CalculatingState from "./meal-check/CalculatingState";
 import NutritionDisplay from "./NutritionDisplay";
@@ -11,7 +10,7 @@ import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { MessageCircle } from "lucide-react";
 
-const MealCheck = () => {
+const MealCheck: React.FC = () => {
   const {
     appState,
     foodItems,
@@ -22,92 +21,58 @@ const MealCheck = () => {
   } = useMealCheckState();
 
   const [inputText, setInputText] = useState("");
-  const hasConfirmed = useRef(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const hasSavedRef = useRef(false);
 
   useEffect(() => {
+    if (appState === AppState.CONFIRMING_ITEMS && !hasSavedRef.current) {
+      hasSavedRef.current = true;
+
+      (async () => {
+        try {
+          console.log("⚡ Starting handleItemsConfirmed...");
+          await handleItemsConfirmed(foodItems);
+
+          console.log("⚡ Rebuilding valid items after confirmation...");
+          const enrichedItems = foodItems.filter(
+            (item): item is FoodWithNutrition =>
+              !!item.nutrition &&
+              typeof item.nutrition === "object" &&
+              "calories" in item.nutrition &&
+              "protein" in item.nutrition &&
+              "carbs" in item.nutrition &&
+              "fat" in item.nutrition
+          );
+
+          if (enrichedItems.length === 0) {
+            console.warn("⚠️ No valid enriched food items to save");
+            return;
+          }
+
+          const {
+            data: { user },
+            error: userErr,
+          } = await supabase.auth.getUser();
+
+          if (userErr || !user) {
+            toast.error("You must be signed in to save your meals");
+            return;
+          }
+
+          console.log("🍱 Saving meal log for user:", user.id);
+          await saveMealLog(foodItems, enrichedItems, user.id);
+          toast.success("Meal logged successfully!");
+
+        } catch (err) {
+          console.error("❌ Error during saveMealLog:", err);
+          toast.error("Failed to save meal log");
+        }
+      })();
+    }
+
     if (appState !== AppState.CONFIRMING_ITEMS) {
-      hasConfirmed.current = false;
+      hasSavedRef.current = false;
     }
-  }, [appState]);
-
-  // Helper function to check if an item has valid nutrition data
-  const hasValidNutrition = (item: FoodItem): boolean => {
-    return !!item.nutrition && 
-      typeof item.nutrition === 'object' &&
-      'calories' in item.nutrition &&
-      'protein' in item.nutrition &&
-      'carbs' in item.nutrition &&
-      'fat' in item.nutrition;
-  };
-
-  const handleNutritionConfirm = async (foodItems: FoodItem[]) => {
-    if (hasConfirmed.current) {
-      console.log("Already confirmed, skipping duplicate save");
-      return;
-    }
-    
-    try {
-      console.log("🔄 Beginning confirmation process for food items:", foodItems);
-      console.log("Current nutrition results:", JSON.stringify(nutritionResults));
-      setIsSaving(true);
-      hasConfirmed.current = true;
-      await handleItemsConfirmed(foodItems);
-
-      // Explicitly filter items that have valid nutrition data
-      const itemsWithNutrition = nutritionResults.filter(
-        (item): item is FoodWithNutrition => hasValidNutrition(item)
-      );
-
-      console.log(`Found ${itemsWithNutrition.length} items with valid nutrition data out of ${nutritionResults.length}`);
-      
-      if (itemsWithNutrition.length === 0) {
-        console.warn("⚠️ No items with valid nutrition data to save");
-        toast.warning("No nutritional data available to save");
-        return;
-      }
-
-      console.log("Checking authentication status...");
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-      if (userError) {
-        console.error("Error checking authentication:", userError);
-        toast.error("Authentication error, saving as anonymous");
-      }
-
-      // Deep copy to prevent mutation issues - use JSON stringify/parse for complete deep copy
-      const foodItemsCopy = JSON.parse(JSON.stringify(foodItems));
-      const nutritionItemsCopy = JSON.parse(JSON.stringify(itemsWithNutrition));
-      
-      console.log("🔍 BEFORE SAVE - Food items:", JSON.stringify(foodItemsCopy));
-      console.log("🔍 BEFORE SAVE - Nutrition items:", JSON.stringify(nutritionItemsCopy));
-
-      if (!user) {
-        console.log("No authenticated user found, using anonymous ID");
-        toast.info("Saving meal as anonymous user");
-        await saveMealLog(foodItemsCopy, nutritionItemsCopy);
-      } else {
-        console.log("📦 Saving meal log for user id:", user.id);
-        toast.info("Saving meal to your account");
-        await saveMealLog(foodItemsCopy, nutritionItemsCopy, user.id);
-      }
-      
-      // Additional debug to verify meal was logged
-      console.log("Meal saving process completed");
-    } catch (error) {
-      console.error("❌ Error saving meal log:", error);
-      toast.error("Failed to save meal log");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  useEffect(() => {
-    if (appState === AppState.CONFIRMING_ITEMS && !hasConfirmed.current) {
-      console.log("Auto-confirming nutrition items in CONFIRMING_ITEMS state");
-      handleNutritionConfirm(foodItems);
-    }
-  }, [appState, foodItems]);
+  }, [appState, foodItems, handleItemsConfirmed]);
 
   const renderStep = () => {
     switch (appState) {
