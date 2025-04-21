@@ -39,6 +39,7 @@ const MealCheck = () => {
     
     try {
       console.log("🔄 Beginning confirmation process for food items:", foodItems);
+      console.log("Current nutrition results:", nutritionResults);
       setIsSaving(true);
       hasConfirmed.current = true;
       await handleItemsConfirmed(foodItems);
@@ -70,18 +71,26 @@ const MealCheck = () => {
         toast.error("Authentication error, saving as anonymous");
       }
 
+      // Deep copy to prevent mutation issues
+      const foodItemsCopy = JSON.parse(JSON.stringify(foodItems));
+      const nutritionItemsCopy = JSON.parse(JSON.stringify(itemsWithNutrition));
+      
+      console.log("🔍 BEFORE SAVE - Food items:", foodItemsCopy);
+      console.log("🔍 BEFORE SAVE - Nutrition items:", nutritionItemsCopy);
+
       if (!user) {
         console.log("No authenticated user found, using anonymous ID");
         toast.info("Saving meal as anonymous user");
-        await saveMealLog(foodItems, itemsWithNutrition);
+        await saveMealLog(foodItemsCopy, nutritionItemsCopy);
       } else {
         console.log("📦 Saving meal log for user id:", user.id);
         toast.info("Saving meal to your account");
-        await saveMealLog(foodItems, itemsWithNutrition, user.id);
+        await saveMealLog(foodItemsCopy, nutritionItemsCopy, user.id);
       }
       
       // Additional debug to verify meal was logged
       console.log("Meal saving process completed");
+      toast.success("Meal logged successfully!");
     } catch (error) {
       console.error("❌ Error saving meal log:", error);
       toast.error("Failed to save meal log");

@@ -1,3 +1,4 @@
+
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { calculateTotals } from "./utils";
 import { getMockNutrition } from "./mockData";
@@ -8,6 +9,12 @@ import { getMockNutrition } from "./mockData";
 export const getNutritionInfo = async (foodItems: FoodItem[]): Promise<FoodWithNutrition[]> => {
   try {
     console.log("Getting nutrition info for food items:", foodItems);
+    
+    // Validate input
+    if (!foodItems || foodItems.length === 0) {
+      console.warn("Empty food items array provided to getNutritionInfo");
+      return [];
+    }
     
     // This would typically call an API to get nutrition info
     // For now, we'll return mock data based on the food items
@@ -30,10 +37,22 @@ export const getNutritionInfo = async (foodItems: FoodItem[]): Promise<FoodWithN
         const nutrition = getMockNutrition(item.name);
         console.log(`Generated mock nutrition for ${item.name}:`, nutrition);
         
-        return {
+        // Create a complete item with nutrition data
+        const itemWithNutrition: FoodWithNutrition = {
           ...item,
           nutrition: nutrition
         };
+        
+        // Validate the newly created nutrition data
+        if (!itemWithNutrition.nutrition || 
+            !itemWithNutrition.nutrition.calories || 
+            !itemWithNutrition.nutrition.protein || 
+            !itemWithNutrition.nutrition.carbs || 
+            !itemWithNutrition.nutrition.fat) {
+          console.warn(`Generated incomplete nutrition for ${item.name}`, itemWithNutrition.nutrition);
+        }
+        
+        return itemWithNutrition;
       })
       .filter((item): item is FoodWithNutrition => {
         const isValid = !!item.nutrition && 
@@ -50,7 +69,13 @@ export const getNutritionInfo = async (foodItems: FoodItem[]): Promise<FoodWithN
         return isValid;
       });
     
+    // Final validation
+    if (results.length === 0) {
+      console.warn("No valid nutrition results were generated");
+    }
+    
     console.log("Final nutrition results:", results);
+    console.log("Total nutrition:", calculateTotals(results));
     return results;
   } catch (err) {
     console.error("Failed to get nutrition info:", err);

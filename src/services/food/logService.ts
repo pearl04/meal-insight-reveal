@@ -19,8 +19,8 @@ export const saveMealLog = async (
     console.log("💾 saveMealLog CALLED with userId:", userId);
     
     // CRITICAL DEBUG: Show food items being saved
-    console.log("Food items to save:", foodItems);
-    console.log("Items with nutrition:", itemsWithNutrition);
+    console.log("Food items to save:", JSON.stringify(foodItems, null, 2));
+    console.log("Items with nutrition:", JSON.stringify(itemsWithNutrition, null, 2));
 
     let effectiveUserId = userId;
     let isMockData = false;
@@ -38,13 +38,29 @@ export const saveMealLog = async (
       return;
     }
     
+    // Validate nutrition data before saving
+    if (!itemsWithNutrition || itemsWithNutrition.length === 0) {
+      console.error("❌ No nutrition data to save");
+      toast.error("Failed to save meal log: No nutrition data");
+      return;
+    }
+
+    // Verify nutrition properties exist
+    for (const item of itemsWithNutrition) {
+      if (!item.nutrition || !item.nutrition.calories) {
+        console.error("❌ Invalid nutrition data for item:", item.name);
+        toast.error(`Invalid nutrition data for ${item.name}`);
+        return;
+      }
+    }
+
     // Format the food items to ensure they're properly saved
     const formattedFoodItems = foodItems.map(item => ({
       id: item.id,
       name: item.name,
-      ...(item.nutrition && { nutrition: item.nutrition }),
-      ...(item.healthy_swap && { healthy_swap: item.healthy_swap }),
-      ...(item.rating && { rating: item.rating })
+      nutrition: item.nutrition || null,
+      healthy_swap: item.healthy_swap || null,
+      rating: item.rating || null
     }));
 
     // Format the nutrition summary to ensure it's properly saved
