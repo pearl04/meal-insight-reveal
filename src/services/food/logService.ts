@@ -7,6 +7,18 @@ import { toast } from "sonner";
 import { getAnonUserId } from "@/lib/getAnonUserId";
 
 /**
+ * Validates if a food item has valid nutrition data
+ */
+const hasValidNutrition = (item: FoodItem): boolean => {
+  return !!item.nutrition && 
+    typeof item.nutrition === 'object' &&
+    'calories' in item.nutrition &&
+    'protein' in item.nutrition &&
+    'carbs' in item.nutrition &&
+    'fat' in item.nutrition;
+};
+
+/**
  * Saves a meal log to the database
  */
 export const saveMealLog = async (
@@ -45,15 +57,17 @@ export const saveMealLog = async (
       return;
     }
 
-    // Verify nutrition properties exist
-    for (const item of itemsWithNutrition) {
-      if (!item.nutrition || !item.nutrition.calories) {
-        console.error("❌ Invalid nutrition data for item:", item.name);
-        toast.error(`Invalid nutrition data for ${item.name}`);
-        return;
-      }
+    // Explicitly filter items with valid nutrition
+    const validNutritionItems = itemsWithNutrition.filter(item => hasValidNutrition(item));
+    
+    if (validNutritionItems.length === 0) {
+      console.error("❌ No items with valid nutrition data to save");
+      toast.error("No nutritional data available to save");
+      return;
     }
 
+    console.log(`Found ${validNutritionItems.length} valid nutrition items out of ${itemsWithNutrition.length}`);
+    
     // Format the food items to ensure they're properly saved
     const formattedFoodItems = foodItems.map(item => ({
       id: item.id,
@@ -65,15 +79,20 @@ export const saveMealLog = async (
 
     // Format the nutrition summary to ensure it's properly saved
     const formattedNutritionSummary = {
-      items: itemsWithNutrition.map(item => ({
+      items: validNutritionItems.map(item => ({
         id: item.id,
         name: item.name,
-        nutrition: item.nutrition,
+        nutrition: {
+          calories: String(item.nutrition.calories),
+          protein: String(item.nutrition.protein),
+          carbs: String(item.nutrition.carbs),
+          fat: String(item.nutrition.fat)
+        },
         healthy_swap: item.healthy_swap || null,
         rating: item.rating || null,
-        feedback: item.nutrition ? `${item.name} contains approximately ${item.nutrition.calories} calories` : null
+        feedback: `${item.name} contains approximately ${item.nutrition.calories} calories`
       })),
-      totals: calculateTotals(itemsWithNutrition),
+      totals: calculateTotals(validNutritionItems),
     };
 
     const mealLogData: MealLogInsert = {

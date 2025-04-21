@@ -31,6 +31,16 @@ const MealCheck = () => {
     }
   }, [appState]);
 
+  // Helper function to check if an item has valid nutrition data
+  const hasValidNutrition = (item: FoodItem): boolean => {
+    return !!item.nutrition && 
+      typeof item.nutrition === 'object' &&
+      'calories' in item.nutrition &&
+      'protein' in item.nutrition &&
+      'carbs' in item.nutrition &&
+      'fat' in item.nutrition;
+  };
+
   const handleNutritionConfirm = async (foodItems: FoodItem[]) => {
     if (hasConfirmed.current) {
       console.log("Already confirmed, skipping duplicate save");
@@ -39,24 +49,18 @@ const MealCheck = () => {
     
     try {
       console.log("🔄 Beginning confirmation process for food items:", foodItems);
-      console.log("Current nutrition results:", nutritionResults);
+      console.log("Current nutrition results:", JSON.stringify(nutritionResults));
       setIsSaving(true);
       hasConfirmed.current = true;
       await handleItemsConfirmed(foodItems);
 
       // Explicitly filter items that have valid nutrition data
       const itemsWithNutrition = nutritionResults.filter(
-        (item): item is FoodWithNutrition => 
-          !!item.nutrition && 
-          typeof item.nutrition === 'object' &&
-          'calories' in item.nutrition &&
-          'protein' in item.nutrition &&
-          'carbs' in item.nutrition &&
-          'fat' in item.nutrition
+        (item): item is FoodWithNutrition => hasValidNutrition(item)
       );
 
-      console.log(`Found ${itemsWithNutrition.length} items with nutrition data`, itemsWithNutrition);
-
+      console.log(`Found ${itemsWithNutrition.length} items with valid nutrition data out of ${nutritionResults.length}`);
+      
       if (itemsWithNutrition.length === 0) {
         console.warn("⚠️ No items with valid nutrition data to save");
         toast.warning("No nutritional data available to save");
@@ -71,12 +75,12 @@ const MealCheck = () => {
         toast.error("Authentication error, saving as anonymous");
       }
 
-      // Deep copy to prevent mutation issues
+      // Deep copy to prevent mutation issues - use JSON stringify/parse for complete deep copy
       const foodItemsCopy = JSON.parse(JSON.stringify(foodItems));
       const nutritionItemsCopy = JSON.parse(JSON.stringify(itemsWithNutrition));
       
-      console.log("🔍 BEFORE SAVE - Food items:", foodItemsCopy);
-      console.log("🔍 BEFORE SAVE - Nutrition items:", nutritionItemsCopy);
+      console.log("🔍 BEFORE SAVE - Food items:", JSON.stringify(foodItemsCopy));
+      console.log("🔍 BEFORE SAVE - Nutrition items:", JSON.stringify(nutritionItemsCopy));
 
       if (!user) {
         console.log("No authenticated user found, using anonymous ID");
@@ -90,7 +94,6 @@ const MealCheck = () => {
       
       // Additional debug to verify meal was logged
       console.log("Meal saving process completed");
-      toast.success("Meal logged successfully!");
     } catch (error) {
       console.error("❌ Error saving meal log:", error);
       toast.error("Failed to save meal log");

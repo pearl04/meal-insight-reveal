@@ -1,4 +1,3 @@
-
 import { FoodItem, FoodWithNutrition } from "@/types/nutrition";
 import { calculateTotals } from "./utils";
 import { getMockNutrition } from "./mockData";
@@ -30,7 +29,18 @@ export const getNutritionInfo = async (foodItems: FoodItem[]): Promise<FoodWithN
             'carbs' in item.nutrition && 
             'fat' in item.nutrition) {
           console.log("Item already has valid nutrition data:", item.name);
-          return item as FoodWithNutrition;
+          // Ensure nutrition values are strings for consistency
+          const validatedNutrition = {
+            calories: String(item.nutrition.calories),
+            protein: String(item.nutrition.protein),
+            carbs: String(item.nutrition.carbs),
+            fat: String(item.nutrition.fat)
+          };
+          
+          return {
+            ...item,
+            nutrition: validatedNutrition
+          } as FoodWithNutrition;
         }
         
         // Otherwise generate nutrition data
@@ -72,10 +82,10 @@ export const getNutritionInfo = async (foodItems: FoodItem[]): Promise<FoodWithN
     // Final validation
     if (results.length === 0) {
       console.warn("No valid nutrition results were generated");
+    } else {
+      console.log("Final nutrition results:", JSON.stringify(results));
+      console.log("Total nutrition:", calculateTotals(results));
     }
-    
-    console.log("Final nutrition results:", results);
-    console.log("Total nutrition:", calculateTotals(results));
     return results;
   } catch (err) {
     console.error("Failed to get nutrition info:", err);
