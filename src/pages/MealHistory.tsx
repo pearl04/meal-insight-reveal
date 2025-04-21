@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +21,9 @@ interface MealLog {
   user_id?: string;
 }
 
-type TestMealLogAccess = boolean | null;
+interface TestMealLogAccessResult {
+  result: boolean;
+}
 
 export default function MealHistory() {
   const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
@@ -63,9 +64,13 @@ export default function MealHistory() {
         }
 
         console.log("🔑 Testing RLS permissions...");
-        // Fix: Add the second type parameter (empty object) for input parameters
-        const { data: permissionTest, error: permissionError } = await supabase.rpc<TestMealLogAccess, {}>('test_meal_log_access');
-        console.log("Permission test result:", permissionTest);
+        const { data: permissionTest, error: permissionError } = await supabase
+          .from('meal_logs')
+          .select('id')
+          .limit(1)
+          .single();
+          
+        console.log("Permission test result:", permissionTest ? "Access granted" : "No access");
         if (permissionError) {
           console.error("RLS permission test error:", permissionError);
         }
