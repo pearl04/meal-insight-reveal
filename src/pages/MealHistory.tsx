@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +29,8 @@ export default function MealHistory() {
 
   useEffect(() => {
     async function fetchMealLogs() {
+      console.log("==========================================");
+      console.log("🔍 MealHistory: Starting fetch meal logs process");
       setIsLoading(true);
       
       try {
@@ -44,21 +45,29 @@ export default function MealHistory() {
           // User is authenticated
           currentUserId = user.id;
           setIsAnonymous(false);
-          console.log("Using authenticated user ID:", currentUserId);
+          console.log("✅ AUTHENTICATED user with ID:", currentUserId);
         } else {
           // User is anonymous
           anonUserId = getAnonUserId();
           currentUserId = anonUserId;
           setIsAnonymous(true);
-          console.log("Using anonymous ID:", anonUserId);
+          console.log("👤 ANONYMOUS user with ID:", anonUserId);
         }
 
         setUserId(currentUserId);
 
         if (!currentUserId) {
-          console.log("No user ID found, showing empty meal history");
+          console.log("❌ No user ID found, showing empty meal history");
           setIsLoading(false);
           return;
+        }
+
+        // DEBUG: Check RLS permissions with a raw query
+        console.log("🔑 Testing RLS permissions...");
+        const { data: permissionTest, error: permissionError } = await supabase.rpc('test_meal_log_access');
+        console.log("Permission test result:", permissionTest);
+        if (permissionError) {
+          console.error("RLS permission test error:", permissionError);
         }
 
         console.log("-------- DEBUGGING CRITICAL --------");
@@ -82,12 +91,13 @@ export default function MealHistory() {
         
         // Perform a direct database search with the exact user ID for authenticated user
         if (user?.id) {
-          // --- FIX: always query with RAW auth user ID, never prefixed! ---
           console.log("Fetching meal logs for authenticated user:", user.id);
+          console.log("SQL equivalent: SELECT * FROM meal_logs WHERE user_id = '" + user.id + "'");
+          
           const { data: authLogs, error } = await supabase
             .from("meal_logs")
             .select("*")
-            .eq("user_id", user.id) // never prefix
+            .eq("user_id", user.id) // never prefix for authenticated users
             .order("created_at", { ascending: false });
           
           if (error) {
@@ -120,6 +130,8 @@ export default function MealHistory() {
         // For anonymous users
         else if (anonUserId) {
           console.log("Fetching meal logs for anonymous user:", anonUserId);
+          console.log("SQL equivalent: SELECT * FROM meal_logs WHERE user_id = '" + anonUserId + "'");
+          
           const { data: anonLogs, error } = await supabase
             .from("meal_logs")
             .select("*")
@@ -142,6 +154,7 @@ export default function MealHistory() {
         toast.error("An error occurred while loading meal history");
       } finally {
         setIsLoading(false);
+        console.log("==========================================");
       }
     }
 
@@ -214,13 +227,24 @@ export default function MealHistory() {
         </div>
       )}
 
-      {/* Debug section for development 
+      {/* Debug section - uncomment for development */}
       <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
         <div>User ID: {userId || 'None'}</div>
         <div>Is Anonymous: {isAnonymous ? 'Yes' : 'No'}</div>
         <div>Database Records: {mealLogs.length}</div>
+        <div className="mt-2">
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              toast.info("Refreshing meal history...");
+              window.location.reload();
+            }}
+          >
+            Refresh Data
+          </Button>
+        </div>
       </div>
-      */}
 
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse border border-green-600">

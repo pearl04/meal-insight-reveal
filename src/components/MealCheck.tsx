@@ -32,9 +32,13 @@ const MealCheck = () => {
   }, [appState]);
 
   const handleNutritionConfirm = async (foodItems: FoodItem[]) => {
-    if (hasConfirmed.current) return; // Prevent duplicate saves
+    if (hasConfirmed.current) {
+      console.log("Already confirmed, skipping duplicate save");
+      return;
+    }
     
     try {
+      console.log("🔄 Beginning confirmation process for food items:", foodItems);
       setIsSaving(true);
       hasConfirmed.current = true;
       await handleItemsConfirmed(foodItems);
@@ -43,16 +47,32 @@ const MealCheck = () => {
         (item): item is FoodWithNutrition => !!item.nutrition
       );
 
+      console.log(`Found ${itemsWithNutrition.length} items with nutrition data`, itemsWithNutrition);
+
       if (itemsWithNutrition.length > 0) {
+        console.log("Checking authentication status...");
         const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-        if (userError || !user) {
+        if (userError) {
+          console.error("Error checking authentication:", userError);
+          toast.error("Authentication error, saving as anonymous");
+        }
+
+        if (!user) {
           console.log("No authenticated user found, using anonymous ID");
+          toast.info("Saving meal as anonymous user");
           await saveMealLog(foodItems, itemsWithNutrition);
         } else {
           console.log("📦 Saving meal log for user id:", user.id);
+          toast.info("Saving meal to your account");
           await saveMealLog(foodItems, itemsWithNutrition, user.id);
         }
+        
+        // Additional debug to verify meal was logged
+        console.log("Meal saving process completed");
+      } else {
+        console.warn("No items with nutrition data to save");
+        toast.warning("No nutritional data available to save");
       }
     } catch (error) {
       console.error("❌ Error saving meal log:", error);
@@ -64,6 +84,7 @@ const MealCheck = () => {
 
   useEffect(() => {
     if (appState === AppState.CONFIRMING_ITEMS && !hasConfirmed.current) {
+      console.log("Auto-confirming nutrition items in CONFIRMING_ITEMS state");
       handleNutritionConfirm(foodItems);
     }
   }, [appState, foodItems]);

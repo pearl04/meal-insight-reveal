@@ -30,3 +30,11 @@ export function isAnonUser(userId: string): boolean {
   if (!userId) return false;
   return userId.startsWith('anon_');
 }
+
+/**
+ * Extract raw UUID from prefixed ID if needed
+ */
+export function getRawUserId(userId: string): string {
+  if (!userId) return '';
+  return userId.startsWith('anon_') ? userId.replace(/^anon_/, '') : userId;
+}

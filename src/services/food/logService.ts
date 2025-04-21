@@ -17,6 +17,10 @@ export const saveMealLog = async (
   try {
     // Important: Debug logs for meal logging flow
     console.log("💾 saveMealLog CALLED with userId:", userId);
+    
+    // CRITICAL DEBUG: Show food items being saved
+    console.log("Food items to save:", foodItems);
+    console.log("Items with nutrition:", itemsWithNutrition);
 
     let effectiveUserId = userId;
     let isMockData = false;
@@ -71,16 +75,33 @@ export const saveMealLog = async (
 
     console.log("🛠 Meal log object to insert:", JSON.stringify(mealLogData, null, 2));
 
+    // CRITICAL DEBUG: Log the actual Supabase call parameters
+    console.log(`Calling supabase.from("meal_logs").insert with user_id:`, effectiveUserId);
+
     const { data, error } = await supabase.from("meal_logs").insert([mealLogData]).select();
 
     if (error) {
       console.error("❌ Supabase insert error:", error);
-      toast.error("Failed to save meal log");
+      toast.error("Failed to save meal log: " + error.message);
       throw error; // important so we can handle if needed
     }
 
     console.log("✅ Meal log inserted successfully:", data);
     toast.success("Meal logged successfully");
+    
+    // VALIDATION: Immediately check if we can retrieve the saved log
+    const { data: verifyData, error: verifyError } = await supabase
+      .from("meal_logs")
+      .select("*")
+      .eq("user_id", effectiveUserId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+      
+    if (verifyError) {
+      console.error("⚠️ Verification query error:", verifyError);
+    } else {
+      console.log(`Verification found ${verifyData?.length || 0} logs:`, verifyData);
+    }
   } catch (err) {
     console.error("❌ saveMealLog caught an unexpected error:", err);
     toast.error("Failed to save your meal log");
