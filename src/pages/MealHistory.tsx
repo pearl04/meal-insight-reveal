@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Json } from "@/integrations/supabase/types";
 import { getAnonUserId, isAnonUser } from "@/lib/getAnonUserId";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button"; // Add Button import
+import { Button } from "@/components/ui/button";
 
 interface MealLog {
   id: string;
@@ -36,20 +36,16 @@ export default function MealHistory() {
       setIsLoading(true);
       
       try {
-        // First, check for authenticated user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         
-        // Initialize variables
         let currentUserId: string | null = null;
         let anonUserId: string | null = null;
         
         if (user?.id) {
-          // User is authenticated
           currentUserId = user.id;
           setIsAnonymous(false);
           console.log("✅ AUTHENTICATED user with ID:", currentUserId);
         } else {
-          // User is anonymous
           anonUserId = getAnonUserId();
           currentUserId = anonUserId;
           setIsAnonymous(true);
@@ -64,17 +60,15 @@ export default function MealHistory() {
           return;
         }
 
-        // DEBUG: Check RLS permissions with a raw query
         console.log("🔑 Testing RLS permissions...");
-        // Fix for type error: Explicitly type the function call to avoid the 'never' parameter issue
-        const { data: permissionTest, error: permissionError } = await supabase.rpc('test_meal_log_access', {});
+        // Fix here: No parameter should be passed for no-parameter RPC
+        const { data: permissionTest, error: permissionError } = await supabase.rpc('test_meal_log_access');
         console.log("Permission test result:", permissionTest);
         if (permissionError) {
           console.error("RLS permission test error:", permissionError);
         }
 
         console.log("-------- DEBUGGING CRITICAL --------");
-        // Log all available logs for debugging
         const { data: allLogs } = await supabase
           .from("meal_logs")
           .select("*")
@@ -82,17 +76,15 @@ export default function MealHistory() {
           .limit(100);
           
         console.log(`DEBUG: Found ${allLogs?.length || 0} total logs in database:`, allLogs);
-        
+
         if (allLogs && allLogs.length > 0) {
           console.log("Available user IDs in database:", allLogs.map(log => log.user_id));
         }
         
         console.log(`Current user ID (${isAnonymous ? 'anon' : 'auth'}):"${currentUserId}"`);
         
-        // Fetch authenticated user logs
         let logs: MealLog[] = [];
         
-        // Perform a direct database search with the exact user ID for authenticated user
         if (user?.id) {
           console.log("Fetching meal logs for authenticated user:", user.id);
           console.log("SQL equivalent: SELECT * FROM meal_logs WHERE user_id = '" + user.id + "'");
@@ -100,7 +92,7 @@ export default function MealHistory() {
           const { data: authLogs, error } = await supabase
             .from("meal_logs")
             .select("*")
-            .eq("user_id", user.id) // never prefix for authenticated users
+            .eq("user_id", user.id)
             .order("created_at", { ascending: false });
           
           if (error) {
@@ -110,7 +102,6 @@ export default function MealHistory() {
             logs = [...(authLogs || [])];
           }
 
-          // If no authenticated logs and we have an anonymous ID
           if (logs.length === 0) {
             anonUserId = getAnonUserId();
             console.log("No authenticated logs found. Checking anonymous logs with ID:", anonUserId);
@@ -129,9 +120,7 @@ export default function MealHistory() {
               toast.info("Showing your previous anonymous meal logs. Future logs will be saved to your account.");
             }
           }
-        } 
-        // For anonymous users
-        else if (anonUserId) {
+        } else if (anonUserId) {
           console.log("Fetching meal logs for anonymous user:", anonUserId);
           console.log("SQL equivalent: SELECT * FROM meal_logs WHERE user_id = '" + anonUserId + "'");
           
@@ -164,9 +153,7 @@ export default function MealHistory() {
     fetchMealLogs();
   }, []);
 
-  // Helper function to safely extract values from nutrition_summary
   const extractNutritionInfo = (log: MealLog, key: string, defaultValue: string = "N/A"): string => {
-    // Check if it's the expected object structure
     if (typeof log.nutrition_summary === 'object' && 
         log.nutrition_summary !== null && 
         'items' in log.nutrition_summary && 
@@ -175,39 +162,26 @@ export default function MealHistory() {
       return log.nutrition_summary.items[0]?.[key as keyof typeof log.nutrition_summary.items[0]] || defaultValue;
     }
     
-    // Try to access as generic JSON if it doesn't match our expected structure
     try {
-      // @ts-ignore - we're intentionally being flexible here
+      // @ts-ignore 
       return log.nutrition_summary?.items?.[0]?.[key] || defaultValue;
     } catch {
       return defaultValue;
     }
   };
 
-  // Helper function to safely extract meal name from food_items
   const extractMealName = (foodItems: Json): string => {
-    // If foodItems is an array
     if (Array.isArray(foodItems) && foodItems.length > 0) {
-      // Check if the first item has a name property
       if (typeof foodItems[0] === 'object' && foodItems[0] !== null && 'name' in foodItems[0]) {
         return String(foodItems[0].name);
-      }
-      // If the first item is a string
-      else if (typeof foodItems[0] === 'string') {
+      } else if (typeof foodItems[0] === 'string') {
         return foodItems[0];
       }
-    } 
-    // If foodItems is an object with names
-    else if (typeof foodItems === 'object' && foodItems !== null) {
-      // Try to access a name property
-      // @ts-ignore - we're being flexible to handle potential structures
+    } else if (typeof foodItems === 'object' && foodItems !== null) {
+      // @ts-ignore 
       if ('name' in foodItems) return String(foodItems.name);
-      
-      // If it's an object but no direct name, try to stringify a portion
       return JSON.stringify(foodItems).slice(0, 30) + '...';
     }
-    
-    // Fallback for strings or unknown formats
     return typeof foodItems === 'string' ? foodItems : "N/A";
   };
 
@@ -230,7 +204,6 @@ export default function MealHistory() {
         </div>
       )}
 
-      {/* Debug section - uncomment for development */}
       <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
         <div>User ID: {userId || 'None'}</div>
         <div>Is Anonymous: {isAnonymous ? 'Yes' : 'No'}</div>
@@ -277,8 +250,6 @@ export default function MealHistory() {
             ) : (
               mealLogs.map((log) => {
                 const mealName = extractMealName(log.food_items);
-                    
-                // Use our helper function to safely extract values
                 const feedback = extractNutritionInfo(log, 'feedback');
                 const rating = extractNutritionInfo(log, 'rating');
                 const swapSuggestion = extractNutritionInfo(log, 'healthy_swap');
