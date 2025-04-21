@@ -26,16 +26,10 @@ export const saveMealLog = async (
     let isMockData = false;
     
     if (!effectiveUserId) {
-      // Only use anon_ prefix for anonymous users
+      // For anonymous users, use the full ID with anon_ prefix
       effectiveUserId = getAnonUserId();
       isMockData = true; // Flag as mock data for anonymous users
       console.log("Using anonymous ID for meal log:", effectiveUserId);
-    } else {
-      // Authenticated users should NEVER have anon_ prefix!
-      if (effectiveUserId.startsWith('anon_')) {
-        effectiveUserId = effectiveUserId.replace(/^anon_/, '');
-      }
-      console.log("Using authenticated user ID for meal log:", effectiveUserId);
     }
     
     if (!effectiveUserId) {
@@ -75,15 +69,13 @@ export const saveMealLog = async (
 
     console.log("🛠 Meal log object to insert:", JSON.stringify(mealLogData, null, 2));
 
-    // CRITICAL DEBUG: Log the actual Supabase call parameters
-    console.log(`Calling supabase.from("meal_logs").insert with user_id:`, effectiveUserId);
-
+    // Insert the meal log into Supabase
     const { data, error } = await supabase.from("meal_logs").insert([mealLogData]).select();
 
     if (error) {
       console.error("❌ Supabase insert error:", error);
       toast.error("Failed to save meal log: " + error.message);
-      throw error; // important so we can handle if needed
+      throw error;
     }
 
     console.log("✅ Meal log inserted successfully:", data);
@@ -105,6 +97,5 @@ export const saveMealLog = async (
   } catch (err) {
     console.error("❌ saveMealLog caught an unexpected error:", err);
     toast.error("Failed to save your meal log");
-    // no rethrow here to prevent UI crash
   }
 };
